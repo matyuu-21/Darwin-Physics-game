@@ -29,10 +29,12 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.image = self.running_sprites[self.current_image]
         self.rect = self.image.get_rect(center = (x, y))
 
-        self.velocity = 50
-        self.gravity = 4.5
+        self.y_velocity = 0
+        self.gravity = 0.8
+        self.jump_strength = -20
+
         self.is_ducking = False
-        self.jump = False
+        self.is_jumping = False
 
     def update(self):
         self.animate()
@@ -57,17 +59,78 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.is_ducking = False
         self.rect.centery = 360
 
-    def apply_gravity(self):
-        if self.rect.centery <= 360:
-            self.rect.centery += self.gravity
-
     def jump(self):
-        if self.rect.centery >= 360:
-            while self.rect.centery - self.velocity > 40:
-                self.rect.centery -= 1
+        if not self.is_jumping and not self.is_ducking:
+            self.is_jumping = True
+            self.y_velocity = self.jump_strength
+
+    def apply_gravity(self):
+        if self.is_jumping:
+            self.y_velocity += self.gravity
+            self.rect.centery += self.y_velocity
+
+            # Stop the dinosaur when it lands
+            if self.rect.centery >= 360:
+                self.rect.centery = 360
+                self.y_velocity = 0
+                self.is_jumping = False
+
+#Obstacle stuff
+cactus_images = [
+    pygame.image.load("assets/cacti/cactus1.png"),
+    pygame.image.load("assets/cacti/cactus2.png"),
+    pygame.image.load("assets/cacti/cactus3.png"),
+    pygame.image.load("assets/cacti/cactus4.png"),
+    pygame.image.load("assets/cacti/cactus5.png"),
+    pygame.image.load("assets/cacti/cactus6.png")
+]
+
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        original_image = random.choice(cactus_images)
+        self.image = pygame.transform.scale(original_image, (100,120))
+
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = (1280, 400) #height of where the cacti spawns
+
+    def update(self):
+        self.rect.x -= game_speed
+
+        if self.rect.right < 0:
+            self.kill()
+
+ptero_images [
+    pygame.image.load("assests/ptero1.png"),
+    
+]
+
+cloud_image = pygame.image.load("assets/cloud.png")
+cloud_image = pygame.transform.scale(cloud_image, (100, 60))
+
+class Cloud(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        self.image = cloud_image
+
+        self.rect = self.image.get_rect()
+        self.rect.x = 1280
+        self.rect.y = random.randint(50, 200)
+
+        self.speed = random.uniform(1, 3)
+
+    def update(self):
+        self.rect.x -= self.speed
+
+        if self.rect.right < 0:
+            self.kill()
 
 #groups
 dinosaur_group = pygame.sprite.Group()
+obstacle_group = pygame.sprite.Group()
+cloud_group = pygame.sprite.Group()
 
 #object
 dinosaur = Dinosaur(50, 360)
@@ -82,6 +145,15 @@ ground = pygame.transform.scale(ground, (1280, 20))
 ground_x = 0
 ground_rect = ground.get_rect(center = (640, 400))
 
+#spawn timers
+SPAWN_OBSTACLE = pygame.USEREVENT + 1
+pygame.time.set_timer(SPAWN_OBSTACLE, 1500)
+
+SPAWN_CLOUD = pygame.USEREVENT + 2
+pygame.time.set_timer(SPAWN_CLOUD, 3000)
+
+
+
 #mainloop
 while True: 
     keys = pygame.key.get_pressed()
@@ -95,10 +167,24 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_SPACE, pygame.K_UP):
+                dinosaur.jump()
+        if event.type == SPAWN_OBSTACLE:
+            obstacle_group.add(Obstacle())
+        if event.type == SPAWN_CLOUD:
+            cloud_group.add(Cloud())
 
     screen.fill("white")
     dinosaur_group.update()
     dinosaur_group.draw(screen)
+    obstacle_group.update()
+    cloud_group.update()
+    cloud_group.draw(screen)
+    obstacle_group.draw(screen)
+
+    if pygame.sprite.spritecollide(dinosaur, obstacle_group, False):
+        print("Game Over") #add onto this more later after adding clouds
 
     game_speed += 0.0015
 

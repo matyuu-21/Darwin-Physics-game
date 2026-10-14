@@ -1,6 +1,10 @@
 # sir darwin game lets go
 import pygame, sys, random
 
+import dino
+import obst
+import clouds 
+
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
@@ -8,136 +12,19 @@ pygame.display.set_caption("Darwin's-Journey")
 
 game_font = pygame.font.Font(None, 40)
 
-#dinosaur class
-class Dinosaur(pygame.sprite.Sprite): #learn classses
-    def __init__(self, x, y):
-        super().__init__()
-
-        self.running_sprites = []
-        self.ducking_sprites = []
-
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/dino1.png"), (80, 100)))
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/dino2.png"), (80, 100)))
-
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/dinoducking1.png"), (80, 100)))
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/dinoducking2.png"), (80, 100)))
-       
-        self.x = x
-        self.y = y
-    
-        self.current_image = 0
-        self.image = self.running_sprites[self.current_image]
-        self.rect = self.image.get_rect(center = (x, y))
-
-        self.y_velocity = 0
-        self.gravity = 0.8
-        self.jump_strength = -20
-
-        self.is_ducking = False
-        self.is_jumping = False
-
-    def update(self):
-        self.animate()
-        self.apply_gravity()
-
-    def animate(self):
-        self.current_image += 0.05
-
-        if self.current_image > 1:
-            self.current_image = 0
-
-        if self.is_ducking:
-            self.image = self.ducking_sprites[int(self.current_image)]
-        else:
-            self.image = self.running_sprites[int(self.current_image)]
-
-    def duck(self):
-        self.is_ducking = True
-        self.rect.centery = 380
-
-    def unduck(self):
-        self.is_ducking = False
-        self.rect.centery = 360
-
-    def jump(self):
-        if not self.is_jumping and not self.is_ducking:
-            self.is_jumping = True
-            self.y_velocity = self.jump_strength
-
-    def apply_gravity(self):
-        if self.is_jumping:
-            self.y_velocity += self.gravity
-            self.rect.centery += self.y_velocity
-
-            # Stop the dinosaur when it lands
-            if self.rect.centery >= 360:
-                self.rect.centery = 360
-                self.y_velocity = 0
-                self.is_jumping = False
-
-#Obstacle stuff
-cactus_images = [
-    pygame.image.load("assets/cacti/cactus1.png"),
-    pygame.image.load("assets/cacti/cactus2.png"),
-    pygame.image.load("assets/cacti/cactus3.png"),
-    pygame.image.load("assets/cacti/cactus4.png"),
-    pygame.image.load("assets/cacti/cactus5.png"),
-    pygame.image.load("assets/cacti/cactus6.png")
-]
-
-class Obstacle(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-
-        original_image = random.choice(cactus_images)
-        self.image = pygame.transform.scale(original_image, (100,120))
-
-        self.rect = self.image.get_rect()
-        self.rect.midbottom = (1280, 400) #height of where the cacti spawns
-
-    def update(self):
-        self.rect.x -= game_speed
-
-        if self.rect.right < 0:
-            self.kill()
-
-ptero_images [
-    pygame.image.load("assests/ptero1.png"),
-    
-]
-
-cloud_image = pygame.image.load("assets/cloud.png")
-cloud_image = pygame.transform.scale(cloud_image, (100, 60))
-
-class Cloud(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-
-        self.image = cloud_image
-
-        self.rect = self.image.get_rect()
-        self.rect.x = 1280
-        self.rect.y = random.randint(50, 200)
-
-        self.speed = random.uniform(1, 3)
-
-    def update(self):
-        self.rect.x -= self.speed
-
-        if self.rect.right < 0:
-            self.kill()
-
 #groups
 dinosaur_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 cloud_group = pygame.sprite.Group()
+ptero_group = pygame.sprite.Group()
 
 #object
-dinosaur = Dinosaur(50, 360)
+dinosaur = dino.Dinosaur(50, 360)
 dinosaur_group.add(dinosaur)
 
 #variables for features
 game_speed = 5
+game_over = False
 
 #ground stuff
 ground = pygame.image.load("assets/ground.png") #ground png file
@@ -152,48 +39,73 @@ pygame.time.set_timer(SPAWN_OBSTACLE, 1500)
 SPAWN_CLOUD = pygame.USEREVENT + 2
 pygame.time.set_timer(SPAWN_CLOUD, 3000)
 
-
+SPAWN_PTERO = pygame.USEREVENT + 3
+pygame.time.set_timer(SPAWN_PTERO, 5000)
 
 #mainloop
-while True: 
+while True:
     keys = pygame.key.get_pressed()
+
     if keys[pygame.K_DOWN]:
         dinosaur.duck()
-    else:
-        if dinosaur.is_ducking:
+    else: 
+        if dinosaur.is_ducking: 
             dinosaur.unduck()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_SPACE, pygame.K_UP):
                 dinosaur.jump()
+
         if event.type == SPAWN_OBSTACLE:
-            obstacle_group.add(Obstacle())
+            obstacle = obst.Obstacle()
+            obstacle_group.add(obstacle)
+
         if event.type == SPAWN_CLOUD:
-            cloud_group.add(Cloud())
+            cloud = clouds.Cloud()
+            cloud_group.add(cloud)
 
-    screen.fill("white")
+        if event.type == SPAWN_PTERO:
+            ptero = obst.Ptero()
+            ptero_group.add(ptero)
+
     dinosaur_group.update()
-    dinosaur_group.draw(screen)
-    obstacle_group.update()
     cloud_group.update()
-    cloud_group.draw(screen)
-    obstacle_group.draw(screen)
 
-    if pygame.sprite.spritecollide(dinosaur, obstacle_group, False):
-        print("Game Over") #add onto this more later after adding clouds
+    for obstacle in obstacle_group:
+        obstacle.update(game_speed)
+
+    for ptero in ptero_group:
+        ptero.update(game_speed)
+
+    screen.fill((255, 255, 255))
+
+    cloud_group.draw(screen)
+
+    dinosaur_group.draw(screen)
+    obstacle_group.draw(screen)
+    ptero_group.draw(screen)
+
+    if (
+        pygame.sprite.spritecollideany(dinosaur, obstacle_group) 
+        or pygame.sprite.spritecollideany(dinosaur, ptero_group)
+    ):
+        print("Game Over")
+        pygame.quit()
+        sys.exit()
 
     game_speed += 0.0015
+    ground_x -= game_speed
 
-    ground_x -= 1
     screen.blit(ground, (ground_x, 360))
-    screen.blit(ground, (ground_x + 1200, 360))
+    screen.blit(ground, (ground_x + 1280, 360))
 
     if ground_x <= -1280:
-        ground_x = 0 
+        ground_x = 0
 
     pygame.display.update()
     clock.tick(120)

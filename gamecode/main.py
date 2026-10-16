@@ -148,7 +148,7 @@ while True:
                   best_score = max(best_score, int(score))
                   game_state = "game_over"
 
-      screen.fill(white)
+      screen.fill((255, 255, 255))
 
       cloud_group.draw(screen)
 

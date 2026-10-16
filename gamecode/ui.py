@@ -28,12 +28,12 @@ class GameUI:
         self.play_button = pygame.Rect(490, 390, 300, 70)
         self.restart_button = pygame.Rect(490, 420, 300, 70)
 
-    def draw_text(text, font, color, x, y):
+    def draw_text(self, text, font, color, x, y):
         image = font.render(text, True, color)
         rect = image.get_rect(center=(x, y))
         self.screen.blit(image, rect)
 
-    def draw_button(rect, text):
+    def draw_button(self, rect, text):
         mouse_pos = pygame.mouse.get_pos()
 
         if rect.collidepoint(mouse_pos):
@@ -80,7 +80,7 @@ class GameUI:
 
             self.draw_heart(
                 self.heart_start_x
-                + 1 * (self.heart_size + 10),
+                + i * (self.heart_size + 10),
                 self.heart_y,
                 self.heart_size,
                 color
@@ -90,7 +90,7 @@ class GameUI:
         self.draw_health(lives)
 
         score_image = self.game_font.render(
-            f"SCORE: {int(score):05d}. True, self.black"
+            f"SCORE: {int(score):05d}", True, self.black
         )
         score_rect = score_image.get_rect(
             midright=(self.score_x, self.score_y)
@@ -101,7 +101,7 @@ class GameUI:
             f"BEST: {best_score:05d}", True, self.gray
         )
         best_rect = best_image.get_rect(
-            midright=(self.score_X, self.best_y)
+            midright=(self.score_x, self.best_y)
         )
         self.screen.blit(best_image, best_rect)
 
@@ -114,23 +114,37 @@ class GameUI:
         self.screen.blit(overlay, (0, 0))
 
         self.draw_text(
-            "darwin laptop test", self.title_font,
-            self.black, self.screen_width // 2, 210 
+            "darwin laptop test", 
+            self.title_font,
+            self.black, 
+            self.screen_width // 2, 
+            210 
         )
 
         self.draw_text(
-            "a running game", self.small_font,
-            self.gray, self.screen_width // 2, 275
+            "a running game", 
+            self.small_font,
+            self.gray, 
+            self.screen_width // 2, 
+            275
         )
 
-        self.draw_button(self.play_button, "play")
+        self.draw_button(self.play_button, "PLAY")
 
         self.draw_text(
-            "SPACE/UP = jump", self.small_font, self.gray, self.screen_width // 2, 510
+            "space/up = jump",
+            self.small_font,
+            self.gray,
+            self.screen_width // 2,
+            510
         )
 
         self.draw_text(
-            "hold down to duck", self.small_font, self.gray, self.screen_width // 2, 545
+            "hold down to duck",
+            self.small_font,
+            self.gray,
+            self.screen_width // 2,
+            545
         )
 
     def draw_game_over(self, score, best_score):

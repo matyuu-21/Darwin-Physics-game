@@ -1,6 +1,6 @@
 import pygame, sys, random
 
-import dino, obst, clouds
+import dino, obst, clouds, ui
 
 pygame.init()
 
@@ -11,16 +11,7 @@ screen_height = 720
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 pygame.display.set_caption("darwin laptop")
-
-game_font = pygame.font.Font(None, 40)
-title_font = pygame.font.Font(None, 90)
-small_font = pygame.font.Font(None, 30)
-
-black = (25, 30, 40)
-white = (255, 255, 255)
-orange = (255, 145, 50)
-dark_orange = (220, 105, 25)
-gray = (110, 115, 125)
+game_ui = ui.GameUI(screen)
 
 #groups 
 dinosaur_group = pygame.sprite.Group()
@@ -37,29 +28,11 @@ ground_x = 0
 game_speed = 5
 score = 0 
 best_score = 0
+lives = 3
 game_state = "menu"
 
-play_button = pygame.Rect(490, 390, 300, 70)
-restart_button = pygame.Rect(490, 420, 300, 70)
-
-def draw_text(text, font, color, x, y):
-        image = font.render(text, True, color)
-        rect = image.get_rect(center=(x, y))
-        screen.blit(image, rect)
-
-def draw_button(rect, text):
-        mouse_pos = pygame.mouse.get_pos()
-
-        if rect.collidepoint(mouse_pos):
-            color = dark_orange
-        else: 
-            color = orange
-
-        pygame.draw.rect(screen, color, rect, border_radius=14)
-        draw_text(text, game_font, white, rect.centerx, rect.centery)
-
 def reset_game():
-      global dinosaur, game_speed, score, ground_x
+      global dinosaur, game_speed, score, ground_x, lives
 
       dinosaur_group.empty()
       obstacle_group.empty()
@@ -71,6 +44,7 @@ def reset_game():
 
       game_speed = 5
       score = 0
+      lives = 3
       ground_x = 0
 
 #actual dino
@@ -110,12 +84,12 @@ while True:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 
                 if game_state == "menu":
-                    if play_button.collidepoint(event.pos):
+                    if game_ui.play_button.collidepoint(event.pos):
                         reset_game()
                         game_state = "playing"
 
                 elif game_state == "game_over":
-                    if restart_button.collidepoint(event.pos):
+                    if game_ui.restart_button.collidepoint(event.pos):
                         reset_game()
                         game_state = "playing"
 
@@ -163,7 +137,14 @@ while True:
                   dinosaur, ptero_group
             )
 
-            if hit_cactus or hit_ptero:
+            if hit_cactus:
+                  hit_cactus.kill()
+                  lives -= 1
+            elif hit_ptero:
+                  hit_ptero.kill()
+                  lives -= 1
+            if lives <= 0:
+                  lives = 0
                   best_score = max(best_score, int(score))
                   game_state = "game_over"
 
@@ -178,71 +159,24 @@ while True:
       obstacle_group.draw(screen)
       ptero_group.draw(screen)
 
+      screen.fill((255, 255, 255))
+
+      cloud_group.draw(screen)
+
+      screen.blit(ground, (ground_x, ground_y))
+      screen.blit(
+            ground, (ground_x + screen_width, ground_y))
+
+      dinosaur_group.draw(screen)
+      obstacle_group.draw(screen)
+      ptero_group.draw(screen)
+
       if game_state == "playing":
-          draw_text(
-                f"SCORE: {int(score):05d}",
-                game_font, black, screen_width // 2, 475
-          )
-
-          draw_text(
-                f"BEST: {best_score:05d}",
-                small_font, gray, screen_width // 2, 515
-          )
-      if game_state == "menu":
-            overlay = pygame.Surface(
-                  (screen_width, screen_height), pygame.SRCALPHA
-            )
-            overlay.fill((255,255,255,190))
-            screen.blit(overlay, (0,0))
-
-            draw_text(
-                  "darwin laptop",
-                  title_font, black, screen_width // 2, 210
-            )
-
-            draw_text(
-                  "runner laptop",
-                  small_font, gray, screen_width // 2, 275
-            )
-
-            draw_button(play_button, "PLAY")
-
-            draw_text(
-                  "SPACE or UP for jump",
-                  small_font, gray, screen_width // 2, 510
-            )
-
-            draw_text(
-                  "DOWN to duck",
-                  small_font, gray, screen_width // 2, 545
-            )
+            game_ui.draw_hud(score, best_score, lives)
+      elif game_state == "menu":
+            game_ui.draw_menu()
       elif game_state == "game_over":
-            overlay = pygame.Surface(
-                  (screen_width, screen_height), pygame.SRCALPHA
-            )
-            overlay.fill((255, 255, 255, 200))
-            screen.blit(overlay, (0, 0))
+            game_ui.draw_game_over(score, best_score)
 
-            draw_text(
-                  "Game Over",
-                  title_font, black, screen_width // 2, 220
-            )
-
-            draw_text(
-                  f"SCORE {int(score)}",
-                  game_font, black, screen_width // 2, 300
-            )
-
-            draw_text(
-                  f"BEST: {best_score}",
-                  game_font, gray, screen_width // 2, 345
-            )
-
-            draw_button(restart_button, "PLAY AGAIN")
-
-            draw_text(
-                  "press space/enter to restart",
-                  small_font, gray, screen_width // 2, 530
-            )
       pygame.display.update()
           

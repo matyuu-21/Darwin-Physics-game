@@ -21,8 +21,8 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.rect = self.image.get_rect(center = (x, y))
 
         self.y_velocity = 0
-        self.gravity = 0.8
-        self.jump_strength = -30
+        self.gravity = 0.9
+        self.jump_strength = -20
 
         self.is_ducking = False
         self.is_jumping = False

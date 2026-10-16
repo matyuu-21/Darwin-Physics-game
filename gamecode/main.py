@@ -1,6 +1,6 @@
 import pygame, sys, random
 
-import dino, obst, clouds, ui
+import dino, obst, clouds, ui, powerup
 
 pygame.init()
 
@@ -18,6 +18,7 @@ dinosaur_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 cloud_group = pygame.sprite.Group()
 ptero_group = pygame.sprite.Group()
+powerup_group = pygame.sprite.Group()
 
 #ground variables
 ground = pygame.image.load("assets/ground.png")
@@ -30,14 +31,17 @@ score = 0
 best_score = 0
 lives = 3
 game_state = "menu"
+has_shield = False
+double_score_timer = 0.0
 
 def reset_game():
-      global dinosaur, game_speed, score, ground_x, lives
+      global dinosaur, game_speed, score, ground_x, lives, has_shield, double_score_timer
 
       dinosaur_group.empty()
       obstacle_group.empty()
       cloud_group.empty()
       ptero_group.empty()
+      powerup_group.empty()
 
       dinosaur = dino.Dinosaur(50, 360)
       dinosaur_group.add(dinosaur)
@@ -46,6 +50,8 @@ def reset_game():
       score = 0
       lives = 3
       ground_x = 0
+      has_shield = False
+      double_score_timer = 0.0
 
 #actual dino
 dinosaur = dino.Dinosaur(50, 360)
@@ -61,9 +67,12 @@ pygame.time.set_timer(spawn_cloud, 3000)
 spawn_ptero = pygame.USEREVENT + 3
 pygame.time.set_timer(spawn_ptero, 5000)
 
+spawn_powerup = pygame.USEREVENT + 4
+pygame.time.set_timer(spawn_powerup, 8000)
+
 #main loop hayss
 while True:
-      dt = clock.tick(120) / 1000
+      dt = clock.tick(60) / 1000
 
       for event in pygame.event.get():
 
@@ -102,6 +111,9 @@ while True:
                         cloud_group.add(clouds.Cloud())
                 elif event.type == spawn_ptero:
                         ptero_group.add(obst.Ptero())
+                elif event.type == spawn_powerup:
+                      if game_state == "playing":
+                            powerup_group.add(powerup.PowerUp())
 
       if game_state == "playing":
             keys = pygame.key.get_pressed()
@@ -120,7 +132,14 @@ while True:
             for ptero in ptero_group:
                 ptero.update(game_speed)
 
-            score += dt * 10 #score directly proportional to survival time
+            for active_powerup in powerup_group:
+                active_powerup.update(game_speed)  
+
+            if double_score_timer > 0:
+                  score += dt * 20
+                  double_score_timer -= dt
+            else:
+                  score += dt * 10
 
             game_speed += 0.0015
 
@@ -137,12 +156,29 @@ while True:
                   dinosaur, ptero_group
             )
 
-            if hit_cactus:
-                  hit_cactus.kill()
-                  lives -= 1
-            elif hit_ptero:
-                  hit_ptero.kill()
-                  lives -= 1
+            collected_powerup = pygame.sprite.spritecollideany(
+                  dinosaur, powerup_group
+            )
+
+            if collected_powerup:
+                  if collected_powerup.power_type == "heart":
+                        lives = min(lives + 1, 3)
+                  elif collected_powerup.power_type == "shield":
+                        has_shield = True
+                  elif collected_powerup.power_type == "double_score":
+                        double_score_timer = 8.0
+
+                  collected_powerup.kill()
+
+            if hit_cactus or hit_ptero:
+                  hit_obeject = hit_cactus if hit_cactus else hit_ptero
+                  hit_obeject.kill()
+
+                  if has_shield:
+                        has_shield = False
+                  else:
+                        lives -= 1
+
             if lives <= 0:
                   lives = 0
                   best_score = max(best_score, int(score))
@@ -158,18 +194,7 @@ while True:
       dinosaur_group.draw(screen)
       obstacle_group.draw(screen)
       ptero_group.draw(screen)
-
-      screen.fill((255, 255, 255))
-
-      cloud_group.draw(screen)
-
-      screen.blit(ground, (ground_x, ground_y))
-      screen.blit(
-            ground, (ground_x + screen_width, ground_y))
-
-      dinosaur_group.draw(screen)
-      obstacle_group.draw(screen)
-      ptero_group.draw(screen)
+      powerup_group.draw(screen)
 
       if game_state == "playing":
             game_ui.draw_hud(score, best_score, lives)
@@ -177,6 +202,7 @@ while True:
             game_ui.draw_menu()
       elif game_state == "game_over":
             game_ui.draw_game_over(score, best_score)
+      
 
       pygame.display.update()
           

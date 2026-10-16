@@ -32,9 +32,9 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.apply_gravity()
 
     def animate(self):
-        self.current_image += 0.05
+        self.current_image += 0.15
 
-        if self.current_image > 1:
+        if self.current_image >= len(self.running_sprites):
             self.current_image = 0
 
         if self.is_ducking:

@@ -42,7 +42,7 @@ class Ptero(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.x = 1280
-        self.rect.y = random.choice([250, 300, 350]) #random height for ptero
+        self.rect.y = random.choice([200, 230, 260]) #random height for ptero
 
     def update(self, game_speed):
         self.current_image += 0.05

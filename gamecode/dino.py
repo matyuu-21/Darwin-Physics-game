@@ -22,7 +22,8 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
 
         self.y_velocity = 0
         self.gravity = 0.9
-        self.jump_strength = -20
+        self.jump_strength = -30
+        self.on_ground = True
 
         self.is_ducking = False
         self.is_jumping = False
@@ -43,17 +44,21 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
             self.image = self.running_sprites[int(self.current_image)]
 
     def duck(self):
-        self.is_ducking = True
-        self.rect.centery = 380
+        if not self.is_jumping:
+            self.is_ducking = True
+            self.rect.centery = 380
 
     def unduck(self):
-        self.is_ducking = False
-        self.rect.centery = 360
+        if self.is_ducking:
+            self.is_ducking = False
+            if self.on_ground:
+                self.rect.centery = 360
 
     def jump(self):
         if not self.is_jumping and not self.is_ducking:
             self.is_jumping = True
             self.y_velocity = self.jump_strength
+            self.on_ground = False
 
     def apply_gravity(self):
         if self.is_jumping:

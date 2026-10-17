@@ -21,6 +21,12 @@ class GameUI:
         self.heart_start_x = 45
         self.heart_y = 475
 
+        self.heart_full = pygame.image.load("assets/heart_red.png").convert_alpha()
+        self.heart_empty = pygame.image.load("assets/heart_grey.png").convert_alpha()
+
+        self.heart_full = pygame.transform.scale(self.heart_full, (self.heart_size, self.heart_size))
+        self.heart_empty = pygame.transform.scale(self.heart_empty, (self.heart_size, self.heart_size))
+
         self.score_x = self.screen_width - 45
         self.score_y = 475
         self.best_y = 515
@@ -72,18 +78,16 @@ class GameUI:
         pygame.draw.polygon(self.screen, color, points)
 
     def draw_health(self, lives):
-        full_heart = (235, 55, 75)
-        empty_heart = (190, 190, 190)
-
         for i in range(3):
-            color = full_heart if i < lives else empty_heart
+            if i < lives:
+                heart_image = self.heart_full
+            else: 
+                heart_image = self.heart_empty
 
-            self.draw_heart(
-                self.heart_start_x
-                + i * (self.heart_size + 10),
-                self.heart_y,
-                self.heart_size,
-                color
+            x = self.heart_start_x + i * (self.heart_size + 10)
+
+            self.screen.blit(
+                heart_image, (x, self.heart_y)
             )
 
     def draw_hud(self, score, best_score, lives):

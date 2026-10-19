@@ -125,7 +125,7 @@ while True:
 
             dinosaur_group.update()
             cloud_group.update()
-
+    
             for obstacle in obstacle_group:
                 obstacle.update(game_speed)
 

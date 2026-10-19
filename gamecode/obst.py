@@ -13,11 +13,27 @@ class Obstacle(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
 
-        original_image = random.choice(cactus_images)
-        self.image = pygame.transform.scale(original_image, (100,120))
+        cactus_index = random.randrange(len(cactus_images))
+        original_image = cactus_images[cactus_index]
+
+        cactus_sizes = [
+            (100, 180),
+            (100, 120),
+            (100, 120),
+            (100, 180),
+            (100, 120),
+            (100, 120)
+        ]
+
+        size = cactus_sizes[cactus_index]
+        scaled_image = pygame.transform.scale(original_image, size)
+
+        visible_rect = scaled_image.get_bounding_rect()
+        self.image = scaled_image.subsurface(visible_rect).copy()
+
 
         self.rect = self.image.get_rect()
-        self.rect.midbottom = (1280, 400) #height of where the cacti spawns
+        self.rect.midbottom = (1280, 420) #height of where the cacti spawns
 
     def update(self, game_speed):
         self.rect.x -= game_speed
@@ -42,7 +58,7 @@ class Ptero(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.x = 1280
-        self.rect.y = random.choice([200, 230, 260]) #random height for ptero
+        self.rect.y = random.choice([180, 220, 300]) #random height for ptero
 
     def update(self, game_speed):
         self.current_image += 0.05

@@ -1,6 +1,6 @@
 import pygame, sys, random
 
-import dino, obst, clouds, ui, powerup
+import dino, obst, clouds, ui, powerup, buildings
 
 pygame.init()
 
@@ -19,6 +19,7 @@ obstacle_group = pygame.sprite.Group()
 cloud_group = pygame.sprite.Group()
 ptero_group = pygame.sprite.Group()
 powerup_group = pygame.sprite.Group()
+building_group = pygame.sprite.Group()
 
 #ground variables & background
 ground = pygame.image.load("assets/ground.png")
@@ -48,6 +49,7 @@ def reset_game():
       cloud_group.empty()
       ptero_group.empty()
       powerup_group.empty()
+      building_group.empty()
 
       dinosaur = dino.Dinosaur(50, 360)
       dinosaur_group.add(dinosaur)
@@ -59,6 +61,7 @@ def reset_game():
       has_shield = False
       double_score_timer = 0.0
       background_sky_x = 0 
+
 
 #actual dino
 dinosaur = dino.Dinosaur(50, 360)
@@ -76,6 +79,9 @@ pygame.time.set_timer(spawn_ptero, 5000)
 
 spawn_powerup = pygame.USEREVENT + 4
 pygame.time.set_timer(spawn_powerup, 8000)
+
+spawn_building = pygame.USEREVENT + 5
+pygame.time.set_timer(spawn_building, 3500)
 
 #main loop hayss
 while True:
@@ -121,6 +127,11 @@ while True:
                 elif event.type == spawn_powerup:
                       if game_state == "playing":
                             powerup_group.add(powerup.PowerUp())
+                elif event.type == spawn_building:
+                      building_group.add(buildings.Building())
+                      pygame.time.set_timer(
+                            spawn_building, random.randint(2500, 4500)
+                      )
 
       if game_state == "playing":
             keys = pygame.key.get_pressed()
@@ -132,7 +143,8 @@ while True:
 
             dinosaur_group.update()
             cloud_group.update()
-    
+            building_group.update(2)
+
             for obstacle in obstacle_group:
                 obstacle.update(game_speed)
 
@@ -201,6 +213,7 @@ while True:
       screen.blit(background_sky, (background_sky_x, background_sky_level))
       screen.blit(background_sky, (background_sky_x + screen_width, background_sky_level))
 
+      building_group.draw(screen)
       cloud_group.draw(screen)
 
       screen.blit(ground, (ground_x, ground_y))

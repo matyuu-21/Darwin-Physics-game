@@ -20,11 +20,17 @@ cloud_group = pygame.sprite.Group()
 ptero_group = pygame.sprite.Group()
 powerup_group = pygame.sprite.Group()
 
-#ground variables
+#ground variables & background
 ground = pygame.image.load("assets/ground.png")
 ground = pygame.transform.scale(ground, (screen_width, 20))
 ground_y = 360
 ground_x = 0
+
+background_sky = pygame.image.load("assets/skybg.png")
+background_sky = pygame.transform.scale(background_sky, (screen_width, 710))
+background_sky_level = 0
+background_sky_x = 0
+background_sky_speed = 1
 
 game_speed = 5
 score = 0 
@@ -35,7 +41,7 @@ has_shield = False
 double_score_timer = 0.0
 
 def reset_game():
-      global dinosaur, game_speed, score, ground_x, lives, has_shield, double_score_timer
+      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x
 
       dinosaur_group.empty()
       obstacle_group.empty()
@@ -52,6 +58,7 @@ def reset_game():
       ground_x = 0
       has_shield = False
       double_score_timer = 0.0
+      background_sky_x = 0 
 
 #actual dino
 dinosaur = dino.Dinosaur(50, 360)
@@ -143,11 +150,15 @@ while True:
 
             game_speed += 0.0015
 
+            background_sky_x -= background_sky_speed
+            if background_sky_x <= -screen_width:
+                  background_sky_x += screen_width
+
             ground_x -= game_speed
 
             if ground_x <= -screen_width:
                   ground_x = 0
-
+  
             hit_cactus = pygame.sprite.spritecollideany(
                   dinosaur, obstacle_group
             )
@@ -184,7 +195,11 @@ while True:
                   best_score = max(best_score, int(score))
                   game_state = "game_over"
 
+#DRAWING 
       screen.fill((255, 255, 255))
+
+      screen.blit(background_sky, (background_sky_x, background_sky_level))
+      screen.blit(background_sky, (background_sky_x + screen_width, background_sky_level))
 
       cloud_group.draw(screen)
 

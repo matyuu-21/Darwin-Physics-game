@@ -6,12 +6,14 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
 
         self.running_sprites = []
         self.ducking_sprites = []
+        self.jumping_sprite = pygame.transform.scale(pygame.image.load("assets/jump1.png"),(120, 140))
 
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/run1.png"), (110, 130)))
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/run2.png"), (110, 130)))
+        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/run1.png"), (120, 140)))
+        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/run2.png"), (120, 140)))
 
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/duck.png"), (110, 130)))
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/duck.png"), (110, 130)))
+        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/duck.png"), (120, 140)))
+        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/duck.png"), (120, 140)))
+
       
         self.x = x
         self.y = y
@@ -39,6 +41,8 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
 
         if self.is_ducking:
             self.image = self.ducking_sprites[int(self.current_image)]
+        elif self.is_jumping:
+            self.image = self.jumping_sprite
         else:
             self.image = self.running_sprites[int(self.current_image)]
 

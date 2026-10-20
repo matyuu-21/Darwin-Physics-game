@@ -1,7 +1,7 @@
 import pygame, sys, random
 
 cloud_image = pygame.image.load("assets/cloud.png")
-cloud_image = pygame.transform.scale(cloud_image, (100, 60))
+cloud_image = pygame.transform.scale(cloud_image, (160, 100))
 
 class Cloud(pygame.sprite.Sprite):
     def __init__(self):

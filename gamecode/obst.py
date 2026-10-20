@@ -17,7 +17,7 @@ class Obstacle(pygame.sprite.Sprite):
         original_image = cactus_images[cactus_index]
 
         cactus_sizes = [
-            (100, 180),
+            (80, 100),
             (100, 120),
             (100, 120),
             (100, 180),

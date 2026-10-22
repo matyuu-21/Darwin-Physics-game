@@ -1,0 +1,12 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# PyInstaller build files
+gamecode/build/
+gamecode/dist/
+gamecode/*.spec
+
+# Virtual environments
+.venv/
+venv/

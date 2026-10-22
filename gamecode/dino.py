@@ -1,4 +1,5 @@
 import pygame, sys, random
+from asset_path import asset_path
 
 class Dinosaur(pygame.sprite.Sprite): #learn classses
     def __init__(self, x, y):
@@ -6,13 +7,13 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
 
         self.running_sprites = []
         self.ducking_sprites = []
-        self.jumping_sprite = pygame.transform.scale(pygame.image.load("assets/jump1.png"),(120, 140))
+        self.jumping_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/jump1.png")),(120, 140))
 
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/run1.png"), (120, 140)))
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load("assets/run2.png"), (120, 140)))
+        self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run1.png")), (120, 140)))
+        self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run2.png")), (120, 140)))
 
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/duck.png"), (120, 140)))
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load("assets/duck.png"), (120, 140)))
+        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")), (120, 140)))
+        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")), (120, 140)))
 
       
         self.x = x

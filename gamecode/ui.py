@@ -1,4 +1,5 @@
 import pygame
+from asset_path import asset_path
 
 class GameUI:
     def __init__(self, screen):
@@ -21,8 +22,8 @@ class GameUI:
         self.heart_start_x = 45
         self.heart_y = 475
 
-        self.heart_full = pygame.image.load("assets/heart_red.png").convert_alpha()
-        self.heart_empty = pygame.image.load("assets/heart_grey.png").convert_alpha()
+        self.heart_full = pygame.image.load(asset_path("assets/heart_red.png")).convert_alpha()
+        self.heart_empty = pygame.image.load(asset_path("assets/heart_grey.png")).convert_alpha()
 
         self.heart_full = pygame.transform.scale(self.heart_full, (self.heart_size, self.heart_size))
         self.heart_empty = pygame.transform.scale(self.heart_empty, (self.heart_size, self.heart_size))

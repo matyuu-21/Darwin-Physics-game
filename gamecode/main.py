@@ -1,6 +1,7 @@
 import pygame, sys, random, os
 
 import dino, obst, clouds, ui, powerup, buildings
+from asset_path import asset_path
 
 pygame.init()
 
@@ -22,12 +23,12 @@ powerup_group = pygame.sprite.Group()
 building_group = pygame.sprite.Group()
 
 #ground variables & background
-ground = pygame.image.load("assets/ground.png")
+ground = pygame.image.load(asset_path("assets/ground.png"))
 ground = pygame.transform.scale(ground, (screen_width, 20))
 ground_y = 360
 ground_x = 0
 
-background_sky = pygame.image.load("assets/skybg.png")
+background_sky = pygame.image.load(asset_path("assets/skybg.png"))
 background_sky = pygame.transform.scale(background_sky, (screen_width, 710))
 background_sky_level = 0
 background_sky_x = 0

@@ -1,10 +1,11 @@
 import pygame, random
+from asset_path import asset_path
 
 class Building(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
 
-        self.image =  pygame.image.load("assets/build.png").convert_alpha()
+        self.image =  pygame.image.load(asset_path("assets/build.png")).convert_alpha()
 
         self.image = pygame.transform.scale(self.image, (180, 200))
 

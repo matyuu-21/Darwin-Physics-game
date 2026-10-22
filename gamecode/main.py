@@ -1,4 +1,4 @@
-import pygame, sys, random
+import pygame, sys, random, os
 
 import dino, obst, clouds, ui, powerup, buildings
 
@@ -40,6 +40,8 @@ lives = 3
 game_state = "menu"
 has_shield = False
 double_score_timer = 0.0
+
+
 
 def reset_game():
       global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x

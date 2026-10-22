@@ -1,6 +1,6 @@
 This project is a endless runner based off the Chrome Dinosaur game we all know and love. Its inspiration came from my Physics teacher's humorous personality, It takes aspects such as what he does in class and what he does out of class. 
 
-To run/play the project, so far all that's available is to download the file and run it in a code editor (First time with Pygame and coding w/ general sorry). But I do plan on either trying to make it an .exe file or upload it on itch.io.
+To run/play the project, after downloading the files, go to the .dist folder in gamecode, and then click on the DarwinsJourney.exe file, and thats it!
 
 The flow of the game is almost as similar as any other endless runner game, the difference between this and the Chrome Dinosaur game is that this one has a hearts/lives system, as well having power-ups that spawn and give the player boosts.
 

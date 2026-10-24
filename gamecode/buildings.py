@@ -2,18 +2,18 @@ import pygame, random
 from asset_path import asset_path
 
 class Building(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, start_x=1280):
         super().__init__()
 
-        self.image =  pygame.image.load(asset_path("assets/build.png")).convert_alpha()
+        image = pygame.image.load(
+            asset_path("assets/build.png")
+        ).convert_alpha()
 
-        self.image = pygame.transform.scale(self.image, (180, 200))
-
+        self.image = pygame.transform.scale(image, (280, 200))
         self.rect = self.image.get_rect()
-        self.rect.left - 1200
-        self.rect.bottom = 360
 
-        self.gap = random.randint(180, 350)
+        self.rect.left = start_x
+        self.rect.bottom = 320
 
     def update(self, speed):
         self.rect.x -= speed

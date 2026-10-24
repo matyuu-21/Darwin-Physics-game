@@ -45,7 +45,7 @@ double_score_timer = 0.0
 
 
 def reset_game():
-      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x
+      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed 
 
       dinosaur_group.empty()
       obstacle_group.empty()
@@ -63,6 +63,8 @@ def reset_game():
       ground_x = 0
       has_shield = False
       double_score_timer = 0.0
+      building_speed = 1
+      building_gap = random.randint(250, 500)
       background_sky_x = 0 
 
 
@@ -82,9 +84,6 @@ pygame.time.set_timer(spawn_ptero, 5000)
 
 spawn_powerup = pygame.USEREVENT + 4
 pygame.time.set_timer(spawn_powerup, 8000)
-
-spawn_building = pygame.USEREVENT + 5
-pygame.time.set_timer(spawn_building, 3500)
 
 #main loop hayss
 while True:
@@ -130,11 +129,6 @@ while True:
                 elif event.type == spawn_powerup:
                       if game_state == "playing":
                             powerup_group.add(powerup.PowerUp())
-                elif event.type == spawn_building:
-                      building_group.add(buildings.Building())
-                      pygame.time.set_timer(
-                            spawn_building, random.randint(2500, 4500)
-                      )
 
       if game_state == "playing":
             keys = pygame.key.get_pressed()
@@ -146,7 +140,18 @@ while True:
 
             dinosaur_group.update()
             cloud_group.update()
-            building_group.update(2)
+            building_group.update(building_speed)
+
+            if len(building_group) == 0:
+                  building_group.add(buildings.Building())
+            else:
+                  rightmost_building = max(
+                        building_group, key=lambda building: building.rect.right
+                  )
+
+                  if rightmost_building.rect.right <= screen_width - building_gap:
+                        building_group.add(buildings.Building())
+                        building_gap = random.randint(250, 500)
 
             for obstacle in obstacle_group:
                 obstacle.update(game_speed)

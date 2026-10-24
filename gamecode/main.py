@@ -87,7 +87,7 @@ pygame.time.set_timer(spawn_powerup, 8000)
 
 #main loop hayss
 while True:
-      dt = clock.tick(60) / 1000
+      dt = clock.tick(60) / 10
 
       for event in pygame.event.get():
 
@@ -138,7 +138,7 @@ while True:
             elif dinosaur.is_ducking:
                   dinosaur.unduck()
 
-            dinosaur_group.update()
+            dinosaur_group.update(dt)
             cloud_group.update()
             building_group.update(building_speed)
 
@@ -198,6 +198,9 @@ while True:
                         has_shield = True
                   elif collected_powerup.power_type == "double_score":
                         double_score_timer = 8.0
+                  elif collected_powerup.power_type == "super_jump":
+                        dinosaur.jump_normal == -40
+                        dinosaur.jump_timer = 5
 
                   collected_powerup.kill()
 

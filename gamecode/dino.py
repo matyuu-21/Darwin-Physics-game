@@ -1,6 +1,9 @@
 import pygame, sys, random
 from asset_path import asset_path
 
+ground_y = 420
+
+
 class Dinosaur(pygame.sprite.Sprite): #learn classses
     def __init__(self, x, y):
         super().__init__()
@@ -21,7 +24,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
     
         self.current_image = 0
         self.image = self.running_sprites[self.current_image]
-        self.rect = self.image.get_rect(center = (x + 30, 360))
+        self.rect = self.image.get_rect(center = (x + 30, ground_y))
 
         self.y_velocity = 0
         self.gravity = 0.95
@@ -58,12 +61,12 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         if not self.is_jumping:
             if not self.is_ducking:
                 self.is_ducking = True
-                self.rect.centery = 380
+                self.rect.centery = ground_y + 35
 
     def unduck(self):
         if self.is_ducking:
             self.is_ducking = False
-            self.rect.centery = 360
+            self.rect.centery = ground_y
 
     def jump(self):
         if not self.is_jumping and not self.is_ducking:
@@ -76,7 +79,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
             self.rect.centery += self.y_velocity
 
             # Stop the dinosaur when it lands
-            if self.rect.centery >= 380:
-                self.rect.centery = 380
+            if self.rect.centery >= ground_y:
+                self.rect.centery = ground_y
                 self.y_velocity = 0
                 self.is_jumping = False

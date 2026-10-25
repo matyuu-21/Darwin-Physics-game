@@ -26,7 +26,7 @@ class PowerUp(pygame.sprite.Sprite):
 
         self.image = pygame.transform.scale(self.image, (100, 100))
 
-        self.rect = self.image.get_rect(midleft=(1280, random.randint(250, 330)))
+        self.rect = self.image.get_rect(midleft=(1280, random.randint(320, 420)))
 
     def update(self, game_speed):
         self.rect.x -= int(game_speed)

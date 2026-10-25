@@ -20,7 +20,7 @@ class GameUI:
 
         self.heart_size = 28
         self.heart_start_x = 45
-        self.heart_y = 475
+        self.heart_y = 530
 
         self.heart_full = pygame.image.load(asset_path("assets/heart_red.png")).convert_alpha()
         self.heart_empty = pygame.image.load(asset_path("assets/heart_grey.png")).convert_alpha()
@@ -29,8 +29,8 @@ class GameUI:
         self.heart_empty = pygame.transform.scale(self.heart_empty, (self.heart_size, self.heart_size))
 
         self.score_x = self.screen_width - 45
-        self.score_y = 475
-        self.best_y = 515
+        self.score_y = 520
+        self.best_y = 550
 
         self.play_button = pygame.Rect(490, 390, 300, 70)
         self.restart_button = pygame.Rect(490, 420, 300, 70)

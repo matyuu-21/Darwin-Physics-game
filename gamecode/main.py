@@ -25,11 +25,12 @@ building_group = pygame.sprite.Group()
 #ground variables & background
 ground = pygame.image.load(asset_path("assets/ground.png"))
 ground = pygame.transform.scale(ground, (screen_width, 20))
-ground_y = 365
+ground_y = 460
+other_y = 480
 ground_x = 0
 
 background_sky = pygame.image.load(asset_path("assets/skybg.png"))
-background_sky = pygame.transform.scale(background_sky, (screen_width, 710))
+background_sky = pygame.transform.scale(background_sky, (screen_width, screen_height))
 background_sky_level = 0
 background_sky_x = 0
 background_sky_speed = 1
@@ -54,7 +55,7 @@ def reset_game():
       powerup_group.empty()
       building_group.empty()
 
-      dinosaur = dino.Dinosaur(50, 360)
+      dinosaur = dino.Dinosaur(50, other_y)
       dinosaur_group.add(dinosaur)
 
       game_speed = 5
@@ -69,7 +70,7 @@ def reset_game():
 
 
 #actual dino
-dinosaur = dino.Dinosaur(50, 360)
+dinosaur = dino.Dinosaur(50, other_y)
 dinosaur_group.add(dinosaur)
 
 #spawns
@@ -170,9 +171,9 @@ while True:
 
             game_speed += 0.0015
 
-            background_sky_x -= background_sky_speed
-            if background_sky_x <= -screen_width:
-                  background_sky_x += screen_width
+            #background_sky_x -= background_sky_speed
+            #if background_sky_x <= -screen_width:
+                  #background_sky_x += screen_width
 
             ground_x -= game_speed
 
@@ -221,10 +222,12 @@ while True:
 #DRAWING 
       screen.fill((255, 255, 255))
 
-      screen.blit(background_sky, (background_sky_x, background_sky_level))
-      screen.blit(background_sky, (background_sky_x + screen_width, background_sky_level))
+      #screen.blit(background_sky, (background_sky_x, background_sky_level))
+      #screen.blit(background_sky, (background_sky_x + screen_width, background_sky_level))
 
-      building_group.draw(screen)
+      screen.blit(background_sky, (0,0))
+
+      #building_group.draw(screen)
       cloud_group.draw(screen)
 
       screen.blit(ground, (ground_x, ground_y))

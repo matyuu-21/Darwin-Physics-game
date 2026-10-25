@@ -1,6 +1,9 @@
 import pygame, sys, random
 from asset_path import asset_path
 
+
+ground_y = 490
+
 cactus_images = [
     pygame.image.load(asset_path("assets/cacti/cactus1.png")),
     pygame.image.load(asset_path("assets/cacti/cactus2.png")),
@@ -34,7 +37,7 @@ class Obstacle(pygame.sprite.Sprite):
 
 
         self.rect = self.image.get_rect()
-        self.rect.midbottom = (1280, 420) #height of where the cacti spawns
+        self.rect.midbottom = (1280, ground_y) #height of where the cacti spawns
 
     def update(self, game_speed):
         self.rect.x -= game_speed
@@ -59,7 +62,7 @@ class Ptero(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.x = 1280
-        self.rect.y = random.choice([180, 220, 300]) #random height for ptero
+        self.rect.y = random.choice([220, 320, 370]) #random height for ptero
 
     def update(self, game_speed):
         self.current_image += 0.05

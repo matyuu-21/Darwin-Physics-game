@@ -25,7 +25,7 @@ building_group = pygame.sprite.Group()
 #ground variables & background
 ground = pygame.image.load(asset_path("assets/ground.png"))
 ground = pygame.transform.scale(ground, (screen_width, 20))
-ground_y = 360
+ground_y = 365
 ground_x = 0
 
 background_sky = pygame.image.load(asset_path("assets/skybg.png"))

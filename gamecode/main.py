@@ -228,7 +228,7 @@ while True:
       screen.blit(background_sky, (0,0))
 
       #building_group.draw(screen)
-      cloud_group.draw(screen)
+      #cloud_group.draw(screen)
 
       screen.blit(ground, (ground_x, ground_y))
       screen.blit(ground, (ground_x + screen_width, ground_y))

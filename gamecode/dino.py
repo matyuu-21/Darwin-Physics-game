@@ -45,7 +45,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
                 self.jump_strength = self.jump_normal
 
     def animate(self):
-        self.current_image += 0.03
+        self.current_image += 0.05
 
         if self.current_image >= len(self.running_sprites):
             self.current_image = 0

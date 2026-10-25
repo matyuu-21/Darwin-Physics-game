@@ -22,11 +22,11 @@ class Obstacle(pygame.sprite.Sprite):
 
         cactus_sizes = [
             (80, 100),
+            (120, 140),
             (100, 120),
+            (140, 180),
             (100, 120),
-            (100, 180),
-            (100, 120),
-            (100, 120)
+            (140, 180)
         ]
 
         size = cactus_sizes[cactus_index]
@@ -62,7 +62,7 @@ class Ptero(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.x = 1280
-        self.rect.y = random.choice([220, 320, 370]) #random height for ptero
+        self.rect.y = random.choice([300, 360, 400]) #random height for ptero
 
     def update(self, game_speed):
         self.current_image += 0.05

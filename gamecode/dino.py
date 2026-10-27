@@ -9,15 +9,13 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         super().__init__()
 
         self.running_sprites = []
-        self.ducking_sprites = []
         self.jumping_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/jump1.png")),(120, 140))
 
         self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run1.png")), (120, 140)))
         self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run2.png")), (120, 140)))
 
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")), (120, 125)))
-        self.ducking_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")), (120, 125)))
-
+        self.ducking_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")), (120, 125))
+    
       
         self.x = x
         self.y = y
@@ -29,6 +27,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.y_velocity = 0
         self.gravity = 0.95
         self.jump_normal = -30
+        self.jump_strength = self.jump_normal
         self.jump_timer = 0
 
         self.is_ducking = False
@@ -51,7 +50,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
             self.current_image = 0
 
         if self.is_ducking:
-            self.image = self.ducking_sprites[int(self.current_image)]
+            self.image = self.ducking_sprite
         elif self.is_jumping:
             self.image = self.jumping_sprite
         else:
@@ -83,3 +82,9 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
                 self.rect.centery = ground_y
                 self.y_velocity = 0
                 self.is_jumping = False
+
+    def get_hitbox(self):
+        if self.is_ducking:
+            return self.rect.inflate(-30, -25)
+
+        return self.rect.inflate(-35, -30)

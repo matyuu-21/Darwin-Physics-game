@@ -88,7 +88,7 @@ pygame.time.set_timer(spawn_powerup, 8000)
 
 #main loop hayss
 while True:
-      dt = clock.tick(60) / 10
+      dt = clock.tick(60) / 1000
 
       for event in pygame.event.get():
 
@@ -200,14 +200,29 @@ while True:
                   elif collected_powerup.power_type == "double_score":
                         double_score_timer = 8.0
                   elif collected_powerup.power_type == "super_jump":
-                        dinosaur.jump_normal == -40
-                        dinosaur.jump_timer = 5
+                        dinosaur.jump_normal == -30
+                        dinosaur.jump_timer = 8
 
                   collected_powerup.kill()
 
+            dino_hitbox = dinosaur.get_hitbox()
+
+            hit_cactus = None
+            hit_ptero = None
+            for obstacle in obstacle_group:
+                  if dino_hitbox.colliderect(obstacle.rect):
+                        hit_cactus = obstacle
+                        break
+            for ptero in ptero_group:
+                  ptero_hitbox = ptero.rect.inflate(-10, -10)
+
+                  if dino_hitbox.colliderect(ptero_hitbox):
+                        hit_ptero = ptero
+                        break
+
             if hit_cactus or hit_ptero:
-                  hit_obeject = hit_cactus if hit_cactus else hit_ptero
-                  hit_obeject.kill()
+                  hit_object = hit_cactus if hit_cactus else hit_ptero
+                  hit_object.kill()
 
                   if has_shield:
                         has_shield = False
@@ -225,6 +240,7 @@ while True:
       #screen.blit(background_sky, (background_sky_x, background_sky_level))
       #screen.blit(background_sky, (background_sky_x + screen_width, background_sky_level))
 
+      background_sky.set_alpha(150) #transparency
       screen.blit(background_sky, (0,0))
 
       #building_group.draw(screen)

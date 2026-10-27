@@ -21,12 +21,12 @@ class Obstacle(pygame.sprite.Sprite):
         original_image = cactus_images[cactus_index]
 
         cactus_sizes = [
-            (80, 100),
+            (160, 180),
+            (140, 160),
             (120, 140),
-            (100, 120),
             (140, 180),
-            (100, 120),
-            (140, 180)
+            (140, 160),
+            (180, 160)
         ]
 
         size = cactus_sizes[cactus_index]
@@ -38,6 +38,7 @@ class Obstacle(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.midbottom = (1280, ground_y) #height of where the cacti spawns
+        self.hitbox = self.rect.inflate(-30, -10)
 
     def update(self, game_speed):
         self.rect.x -= game_speed

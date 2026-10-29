@@ -1,6 +1,6 @@
 import pygame, sys, random, os
 
-import dino, obst, clouds, ui, powerup, buildings
+import dino, obst, clouds, ui, powerup, buildings, boss, projectile
 from asset_path import asset_path
 
 pygame.init()
@@ -21,6 +21,8 @@ cloud_group = pygame.sprite.Group()
 ptero_group = pygame.sprite.Group()
 powerup_group = pygame.sprite.Group()
 building_group = pygame.sprite.Group()
+boss_group = pygame.sprite.Group()
+projectile_group = pygame.sprite.Group()
 
 #ground variables & background
 ground = pygame.image.load(asset_path("assets/ground.png"))
@@ -42,11 +44,12 @@ lives = 3
 game_state = "menu"
 has_shield = False
 double_score_timer = 0.0
-
+boss_score = 300
+boss_defeated = False
 
 
 def reset_game():
-      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed 
+      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed, boss_defeated
 
       dinosaur_group.empty()
       obstacle_group.empty()
@@ -54,6 +57,8 @@ def reset_game():
       ptero_group.empty()
       powerup_group.empty()
       building_group.empty()
+      boss_group.empty()
+      projectile_group.empty()
 
       dinosaur = dino.Dinosaur(50, other_y)
       dinosaur_group.add(dinosaur)
@@ -67,6 +72,7 @@ def reset_game():
       building_speed = 1
       building_gap = random.randint(250, 500)
       background_sky_x = 0 
+      boss_defeated = False
 
 
 #actual dino
@@ -98,25 +104,34 @@ while True:
 
             if event.type == pygame.KEYDOWN:
 
-                if game_state in ("menu", "game_over"):
+                  if game_state in ("menu", "game_over"):
                         if event.key in (pygame.K_SPACE, pygame.K_RETURN):
                               reset_game()
                               game_state = "playing"
-                elif game_state == "playing":
-                      if event.key in (pygame.K_SPACE, pygame.K_UP):
+                  elif game_state == "playing":
+                        if event.key in (pygame.K_SPACE, pygame.K_UP):
                             dinosaur.jump()
+
+                  elif game_state == "boss_fight":
+                        if event.key == pygame.K_f and boss_group:
+                              shot = projectile.Projectile(
+                                    dinosaur.rect.right,
+                                    dinosaur.rect.centery
+                              )
+                              projectile_group.add(shot)
+
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 
-                if game_state == "menu":
-                    if game_ui.play_button.collidepoint(event.pos):
-                        reset_game()
-                        game_state = "playing"
+                  if game_state == "menu":
+                        if game_ui.play_button.collidepoint(event.pos):
+                              reset_game()
+                              game_state = "playing"
 
-                elif game_state == "game_over":
-                    if game_ui.restart_button.collidepoint(event.pos):
-                        reset_game()
-                        game_state = "playing"
+                  elif game_state == "game_over":
+                        if game_ui.restart_button.collidepoint(event.pos):
+                              reset_game()
+                              game_state = "playing"
 
             #objectspawns
             if game_state == "playing":
@@ -147,7 +162,7 @@ while True:
                   building_group.add(buildings.Building())
             else:
                   rightmost_building = max(
-                        building_group, key=lambda building: building.rect.right
+                        building_group, key=lambda building: building.rect.right #fix this soon after boss i guess
                   )
 
                   if rightmost_building.rect.right <= screen_width - building_gap:
@@ -234,6 +249,30 @@ while True:
                   best_score = max(best_score, int(score))
                   game_state = "game_over"
 
+            if (
+                  game_state == "playing"
+                  and score >= boss_score
+                  and not boss_defeated
+            ):
+                  obstacle_group.empty()
+                  ptero_group.empty()
+
+                  boss_group.add(boss.Boss(1000, 350))
+                  game_state = "boss_fight"
+
+      if game_state == "boss_fight":
+            dinosaur_group.update(dt)
+            boss_group.update()    
+            projectile_group.update()
+
+            for shot in list(projectile_group):
+                  hits = pygame.sprite.spritecollide(
+                        shot, boss_group, False
+                  )
+
+                  if hits: 
+                        hits[0].damage(shot.damage)
+                        shot.kill()
 #DRAWING 
       screen.fill((255, 255, 255))
 
@@ -253,6 +292,12 @@ while True:
       obstacle_group.draw(screen)
       ptero_group.draw(screen)
       powerup_group.draw(screen)
+      boss_group.draw(screen)
+      projectile_group.draw(screen)
+
+      if game_state == "boss_fight" and boss_group:
+            boss_enemy = next(iter(boss_group))
+            boss_enemy.health_bar(screen)
 
       if game_state == "playing":
             game_ui.draw_hud(score, best_score, lives)
@@ -260,6 +305,8 @@ while True:
             game_ui.draw_menu()
       elif game_state == "game_over":
             game_ui.draw_game_over(score, best_score)
+      elif game_state == "boss_fight":
+            game_ui.draw_hud(score, best_score, lives)
       
 
       pygame.display.update()

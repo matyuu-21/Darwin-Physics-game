@@ -17,4 +17,4 @@ class Projectile(pygame.sprite.Sprite):
         self.rect.x += self.speed
 
         if self.rect.left > 1280:
-            self.kill
+            self.kill()

@@ -13,7 +13,7 @@ projectile_group = pygame.sprite.Group()
 dinosaur = dino.Dinosaur(50, 400)
 dinosaur_group = pygame.sprite.Group(dinosaur)
 
-boss_enemy = boss.Boss(1000, 180)
+boss_enemy = boss.Boss(1000, 350)
 boss_group.add(boss_enemy)
 
 running = True
@@ -44,7 +44,7 @@ while running:
         if hits:
             hit_boss = hits[0]
 
-            hit_boss.take_damage(shot.damage)
+            hit_boss.damage(shot.damage)
             shot.kill()
 
     screen.fill((30, 30, 50))

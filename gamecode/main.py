@@ -262,9 +262,25 @@ while True:
 
       if game_state == "boss_fight":
             dinosaur_group.update(dt)
-            boss_group.update()    
+            boss_group.update(dt)    
             projectile_group.update()
 
+      if boss_group:
+            current_boss = boss_group.sprites()[0]
+
+            if current_boss.state == "dashing":
+                  dino_hitbox = dinosaur.get_hitbox()
+                  boss_hitbox = current_boss.rect.inflate(-30, -30)
+
+                  if dino_hitbox.colliderect(boss_hitbox):
+                        lives -= 1
+
+                        current_boss.state = "recovering"
+                        current_boss.image = current_boss.original_image
+                        current_boss.rect = current_boss.image.get_rect(
+                              center=current_boss.rect.center
+                        )
+                  
             for shot in list(projectile_group):
                   hits = pygame.sprite.spritecollide(
                         shot, boss_group, False
@@ -276,6 +292,7 @@ while True:
 
             if not boss_group: 
                   boss_defeated = True
+                  projectile_group.empty()
                   game_state = "playing"
 #DRAWING 
       screen.fill((255, 255, 255))

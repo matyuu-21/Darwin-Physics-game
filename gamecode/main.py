@@ -44,7 +44,7 @@ lives = 3
 game_state = "menu"
 has_shield = False
 double_score_timer = 0.0
-boss_score = 300
+boss_score = 100
 boss_defeated = False
 
 
@@ -273,6 +273,10 @@ while True:
                   if hits: 
                         hits[0].damage(shot.damage)
                         shot.kill()
+
+            if not boss_group: 
+                  boss_defeated = True
+                  game_state = "playing"
 #DRAWING 
       screen.fill((255, 255, 255))
 

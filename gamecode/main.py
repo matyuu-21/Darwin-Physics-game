@@ -46,7 +46,8 @@ lives = 3
 game_state = "menu"
 has_shield = False
 rainbow_timer = 0
-rainbow_duration = 8
+rainbow_duration = 15
+rainbow_speed = 1.5
 double_score_timer = 0.0
 boss_score = 100
 boss_defeated = False
@@ -174,29 +175,34 @@ while True:
             elif dinosaur.is_ducking:
                   dinosaur.unduck()
 
+            current_speed = game_speed
+
+            if rainbow_timer > 0:
+                  current_speed *= rainbow_speed
+
             dinosaur_group.update(dt)
             cloud_group.update()
             building_group.update(building_speed)
 
-            if len(building_group) == 0:
-                  building_group.add(buildings.Building())
-            else:
-                  rightmost_building = max(
-                        building_group, key=lambda building: building.rect.right #fix this soon after boss i guess
-                  )
+            #if len(building_group) == 0:
+                  #uilding_group.add(buildings.Building())
+           # else:
+                  #rightmost_building = max(
+                      #  building_group, key=lambda building: building.rect.right #fix this soon after boss i guess
+                  #)
 
-                  if rightmost_building.rect.right <= screen_width - building_gap:
-                        building_group.add(buildings.Building())
-                        building_gap = random.randint(250, 500)
+                  #if rightmost_building.rect.right <= screen_width - building_gap:
+                       # building_group.add(buildings.Building())
+                       # building_gap = random.randint(250, 500)
 
             for obstacle in obstacle_group:
-                obstacle.update(game_speed)
+                obstacle.update(current_speed)
 
             for ptero in ptero_group:
-                ptero.update(game_speed)
+                ptero.update(current_speed)
 
             for active_powerup in powerup_group:
-                active_powerup.update(game_speed)  
+                active_powerup.update(current_speed)  
 
             if double_score_timer > 0:
                   score += dt * 20
@@ -210,7 +216,7 @@ while True:
             #if background_sky_x <= -screen_width:
                   #background_sky_x += screen_width
 
-            ground_x -= game_speed
+            ground_x -= current_speed
 
             if ground_x <= -screen_width:
                   ground_x = 0
@@ -235,9 +241,9 @@ while True:
                   elif collected_powerup.power_type == "double_score":
                         double_score_timer = 8.0
                   elif collected_powerup.power_type == "super_jump":
-                        dinosaur.jump_normal = -30
+                        dinosaur.jump_normal = -45
                         dinosaur.jump_timer = 8
-                  elif collected_powerup == "star":
+                  elif collected_powerup == "rainbow_star":
                         rainbow_timer = rainbow_duration
                         dinosaur.is_rainbow = True
 

@@ -2,7 +2,7 @@ import pygame, random
 from asset_path import asset_path
 
 class PowerUp(pygame.sprite.Sprite):
-    TYPES = ["heart", "shield", "double_score", "super_jump", "star"]
+    TYPES = ["heart", "shield", "double_score", "super_jump", "rainbow_star"]
 #replace w pic assets next week
     COLORS = {
         "heart": (235, 55, 75),
@@ -16,11 +16,11 @@ class PowerUp(pygame.sprite.Sprite):
             "shield": "assets/shield.png",
             "double_score": "assets/doublescore.png",
             "super_jump": "assets/superjump.png",
-            "star": "assets/starup.png"
+            "rainbow_star": "assets/starup.png"
         }
 
         self.power_type = random.choices(self.TYPES,
-            weights=[25,25,20,20,10], k=1
+            weights=[5,5,5,5,80], k=1
             )[0]
 
         self.image = pygame.image.load(

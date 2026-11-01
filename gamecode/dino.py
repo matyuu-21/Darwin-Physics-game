@@ -54,10 +54,11 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         if self.is_rainbow:
             self.image = self.rainbow_sprite
         
-        if self.is_ducking:
+        elif self.is_ducking:
             self.image = self.ducking_sprite
         elif self.is_jumping:
             self.image = self.jumping_sprite
+
         else:
             self.image = self.running_sprites[int(self.current_image)]
 
@@ -75,7 +76,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
     def jump(self):
         if not self.is_jumping and not self.is_ducking:
             self.is_jumping = True
-            self.y_velocity = self.jump_normal
+            self.y_velocity = self.jump_strength
 
     def release_jump(self):
         if self.is_jumping and self.y_velocity < 0:

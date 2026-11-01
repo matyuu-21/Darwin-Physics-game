@@ -45,13 +45,15 @@ best_score = 0
 lives = 3
 game_state = "menu"
 has_shield = False
+rainbow_timer = 0
+rainbow_duration = 8
 double_score_timer = 0.0
 boss_score = 100
 boss_defeated = False
 
 
 def reset_game():
-      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed, boss_defeated
+      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed, boss_defeated, rainbow_timer
 
       dinosaur_group.empty()
       obstacle_group.empty()
@@ -71,6 +73,7 @@ def reset_game():
       ground_x = 0
       has_shield = False
       double_score_timer = 0.0
+      rainbow_timer = 0
       building_speed = 1
       building_gap = 500
       background_sky_x = 0 
@@ -153,6 +156,15 @@ while True:
                 elif event.type == spawn_powerup:
                       if game_state == "playing":
                             powerup_group.add(powerup.PowerUp())
+      if game_state in ("playing", "boss_fight"):
+
+            if rainbow_timer > 0:
+                  rainbow_timer -= dt
+
+            if rainbow_timer < 0:
+                  rainbow_timer = 0
+
+            dinosaur.is_rainbow = rainbow_timer > 0
 
       if game_state == "playing":
             keys = pygame.key.get_pressed()
@@ -223,8 +235,11 @@ while True:
                   elif collected_powerup.power_type == "double_score":
                         double_score_timer = 8.0
                   elif collected_powerup.power_type == "super_jump":
-                        dinosaur.jump_normal == -30
+                        dinosaur.jump_normal = -30
                         dinosaur.jump_timer = 8
+                  elif collected_powerup == "star":
+                        rainbow_timer = rainbow_duration
+                        dinosaur.is_rainbow = True
 
                   collected_powerup.kill()
 
@@ -247,10 +262,11 @@ while True:
                   hit_object = hit_cactus if hit_cactus else hit_ptero
                   hit_object.kill()
 
-                  if has_shield:
-                        has_shield = False
-                  else:
-                        lives -= 1
+                  if not dinosaur.is_rainbow:
+                        if has_shield:
+                              has_shield = False
+                        else:
+                              lives -= 1
 
             if lives <= 0:
                   lives = 0
@@ -297,11 +313,11 @@ while True:
                   boss_hitbox = current_boss.rect.inflate(-30, -30)
 
                   if dino_hitbox.colliderect(boss_hitbox):
-
-                        if has_shield:
-                              has_shield = False
-                        else:
-                              lives -= 1
+                        if not dinosaur.is_rainbow:
+                              if has_shield:
+                                    has_shield = False
+                              else:
+                                    lives -= 1
 
                         current_boss.state = "recovering"
                         current_boss.image = current_boss.original_image

@@ -9,13 +9,14 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         super().__init__()
 
         self.running_sprites = []
-        self.jumping_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/jump1.png")),(120, 140))
+        self.jumping_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/jump1.png")).convert_alpha(),(120, 140))
 
         self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run1.png")), (120, 140)))
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run2.png")), (120, 140)))
+        self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run2.png")).convert_alpha(), (120, 140)))
 
-        self.ducking_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")), (120, 125))
-    
+        self.ducking_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")).convert_alpha(), (120, 125))
+
+        self.rainbow_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/bike.png")).convert_alpha(), (120, 140))
       
         self.x = x
         self.y = y
@@ -23,6 +24,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.current_image = 0
         self.image = self.running_sprites[self.current_image]
         self.rect = self.image.get_rect(center = (x + 30, ground_y))
+        self.is_rainbow = False
 
         self.y_velocity = 0
         self.gravity = 0.95
@@ -49,6 +51,9 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         if self.current_image >= len(self.running_sprites):
             self.current_image = 0
 
+        if self.is_rainbow:
+            self.image = self.rainbow_sprite
+        
         if self.is_ducking:
             self.image = self.ducking_sprite
         elif self.is_jumping:

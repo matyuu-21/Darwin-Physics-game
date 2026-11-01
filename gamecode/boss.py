@@ -2,8 +2,10 @@ import pygame, math
 from asset_path import asset_path
 
 class Boss(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, boss_type="boss_1"):
         super().__init__()
+
+        self.boss_type = boss_type
 
         self.original_image = pygame.image.load(asset_path("assets/boss1.png")).convert_alpha()
         self.original_image = pygame.transform.scale(self.original_image, (160, 180))
@@ -17,8 +19,19 @@ class Boss(pygame.sprite.Sprite):
         self.image = self.original_image
         self.rect = self.image.get_rect(topleft = (x, y))
 
-        #health
-        self.max_health = 100
+        if self.boss_type == "boss_1":
+            self.max_health = 100
+            self.dash_speed = 850
+            self.attack_interval = 2.5
+        elif self.boss_type == "boss_2":
+            self.max_health = 150
+            self.dash_speed = 1050
+            self.attack_interval = 2.0
+        elif self.boss_type == "boss_3":
+            self.max_health = 250
+            self.dash_speed = 1300
+            self.attack_interval = 1.5
+
         self.health = self.max_health
 
         #move
@@ -34,12 +47,12 @@ class Boss(pygame.sprite.Sprite):
         self.hover_amp = 35
         self.hover_speed = 2.5
 
-        self.attack_timer = 2.5
+        self.attack_timer = self.attack_interval
         self.prepare_timer = 0.67
 
-        self.dash_speed = 850
         self.dash_frame_index = 0
         self.dash_animation_speed = 0.08
+        self.dash_animation_timer = 0
 
         self.recover_speed = 500
 
@@ -111,9 +124,9 @@ class Boss(pygame.sprite.Sprite):
 
                 self.state = "hovering"
 
-                self.attack_timer = 3
+                self.attack_timer = self.attack_interval
                 self.prepare_timer = 0.67
-                self.hover_tiome = 0
+                self.hover_time = 0
 
     def damage(self, amount):
         self.health = max(0, self.health - amount)

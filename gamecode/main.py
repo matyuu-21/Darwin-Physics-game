@@ -2,6 +2,7 @@ import pygame, sys, random, os
 
 import dino, obst, clouds, ui, powerup, buildings, boss, projectile
 from asset_path import asset_path
+from stage_manager import StageManager
 
 pygame.init()
 
@@ -23,6 +24,9 @@ powerup_group = pygame.sprite.Group()
 building_group = pygame.sprite.Group()
 boss_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
+
+#stage manager variable
+stage_manager = StageManager()
 
 #ground variables & background
 ground = pygame.image.load(asset_path("assets/ground.png"))
@@ -49,9 +53,6 @@ rainbow_timer = 0
 rainbow_duration = 15
 rainbow_speed = 1.5
 double_score_timer = 0.0
-boss_score = 100
-boss_defeated = False
-
 
 def reset_game():
       global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed, boss_defeated, rainbow_timer
@@ -78,7 +79,7 @@ def reset_game():
       building_speed = 1
       building_gap = 500
       background_sky_x = 0 
-      boss_defeated = False
+      stage_manager.reset()
 
 
 #actual dino
@@ -243,7 +244,7 @@ while True:
                   elif collected_powerup.power_type == "super_jump":
                         dinosaur.jump_normal = -45
                         dinosaur.jump_timer = 8
-                  elif collected_powerup == "rainbow_star":
+                  elif collected_powerup.power_type == "rainbow_star":
                         rainbow_timer = rainbow_duration
                         dinosaur.is_rainbow = True
 
@@ -279,15 +280,13 @@ while True:
                   best_score = max(best_score, int(score))
                   game_state = "game_over"
 
-            if (
-                  game_state == "playing"
-                  and score >= boss_score
-                  and not boss_defeated
-            ):
+            if stage_manager.check_boss_trigger(score):
+
+                  current_stage = stage_manager.get_current_stage()
                   obstacle_group.empty()
                   ptero_group.empty()
 
-                  boss_group.add(boss.Boss(1000, 350))
+                  boss_group.add(boss.Boss(1000, 350, current_stage["boss"]))
                   game_state = "boss_fight"
 
       if game_state == "boss_fight":
@@ -311,7 +310,7 @@ while True:
                   if hits:
                         hits[0].damage(shot.damage)
                         shot.kill()
-      if boss_group:
+      if game_state == "boss_fight" and boss_group:
             current_boss = boss_group.sprites()[0]
 
             if current_boss.state == "dashing":
@@ -340,9 +339,15 @@ while True:
             game_state = "game_over"
 
       elif game_state == "boss_fight" and not boss_group:
-            boss_defeated = True
             projectile_group.empty()
-            game_state = "playing"
+
+            result = stage_manager.complete_boss()
+
+            if result == "next_stage":
+                  current_stage = stage_manager.get_current_stage()
+                  game_state = "playing"
+            elif result == "game_complete":
+                  game_state = "victory"
 #DRAWING 
       screen.fill((255, 255, 255))
 
@@ -377,7 +382,17 @@ while True:
             game_ui.draw_game_over(score, best_score)
       elif game_state == "boss_fight":
             game_ui.draw_hud(score, best_score, lives)
-      
+      elif game_state == "victory":
+            screen.fill((20, 25, 45))
+
+            victory_font = pygame.font.Font(None, 90)
+            message = victory_font.render("YOU WIN", True, (255, 215, 0))
+
+            message_rect = message.get_rect(
+                  center=(screen_width // 2, screen_height // 2)
+            )
+
+            screen.blit(message, message_rect)
 
       pygame.display.update()
           

@@ -53,6 +53,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
 
         if self.is_rainbow:
             self.image = self.rainbow_sprite
+            self.rect.centery = ground_y + 20
         
         elif self.is_ducking:
             self.image = self.ducking_sprite

@@ -35,8 +35,16 @@ ground_y = 460
 other_y = 480
 ground_x = 0
 
-background_sky = pygame.image.load(asset_path("assets/skybg.png"))
-background_sky = pygame.transform.scale(background_sky, (screen_width, screen_height))
+def load_stage_background():
+      current_stage = stage_manager.get_current_stage()
+
+      background = pygame.image.load(asset_path(current_stage["background"])).convert()
+
+      background = pygame.transform.scale(background,(screen_width, screen_height))
+
+      return background
+background_sky = load_stage_background()
+
 background_sky_level = 0
 background_sky_x = 0
 background_sky_speed = 1
@@ -55,7 +63,7 @@ rainbow_speed = 1.5
 double_score_timer = 0.0
 
 def reset_game():
-      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed, boss_defeated, rainbow_timer
+      global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed, boss_defeated, rainbow_timer, background_sky
 
       dinosaur_group.empty()
       obstacle_group.empty()
@@ -80,6 +88,7 @@ def reset_game():
       building_gap = 500
       background_sky_x = 0 
       stage_manager.reset()
+      background_sky = load_stage_background()
 
 
 #actual dino
@@ -286,7 +295,7 @@ while True:
                   obstacle_group.empty()
                   ptero_group.empty()
 
-                  boss_group.add(boss.Boss(1000, 350, current_stage["boss"]))
+                  boss_group.add(boss.Boss(1000, 350, current_stage))
                   game_state = "boss_fight"
 
       if game_state == "boss_fight":
@@ -345,6 +354,7 @@ while True:
 
             if result == "next_stage":
                   current_stage = stage_manager.get_current_stage()
+                  background_sky = load_stage_background()
                   game_state = "playing"
             elif result == "game_complete":
                   game_state = "victory"

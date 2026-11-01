@@ -2,10 +2,10 @@ import pygame, math
 from asset_path import asset_path
 
 class Boss(pygame.sprite.Sprite):
-    def __init__(self, x, y, boss_type="boss_1"):
+    def __init__(self, x, y, stage_data):
         super().__init__()
 
-        self.boss_type = boss_type
+        self.boss_type = stage_data["boss"]
 
         self.original_image = pygame.image.load(asset_path("assets/boss1.png")).convert_alpha()
         self.original_image = pygame.transform.scale(self.original_image, (160, 180))

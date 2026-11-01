@@ -4,17 +4,23 @@ class StageManager: #tracks the stage and scores for the progression update im g
             {
                 "name": "Stage 1",
                 "boss": "boss_1",
-                "boss_score": 100
+                "boss_score": 100,
+                "background": "assets/skybg.png",
+                "boss_sprite": "assets/boss1.png"
             },
             {
                 "name": "Stage_2",
                 "boss": "boss_2",
-                "boss_score": 200
+                "boss_score": 200,
+                "background": "assets/skybg2.png",
+                "boss_sprite": "assets/boss2.png"
             },
             {
                 "name": "Stage_3",
                 "boss": "boss_3",
-                "boss_score": 300 #bring back to 3000 when ok 
+                "boss_score": 300, #bring back to 3000 when ok 
+                "background": "assets/skybg2.png",
+                "boss_sprite": "assets/boss3.png"
             }
         ]
 

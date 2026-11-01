@@ -124,6 +124,10 @@ while True:
                               )
                               projectile_group.add(shot)
 
+            if event.type == pygame.KEYUP:
+                  if event.key in (pygame.K_SPACE, pygame.K_UP):
+                        dinosaur.release_jump()    
+
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 

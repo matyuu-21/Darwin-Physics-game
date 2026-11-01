@@ -72,6 +72,10 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
             self.is_jumping = True
             self.y_velocity = self.jump_normal
 
+    def release_jump(self):
+        if self.is_jumping and self.y_velocity < 0:
+            self.y_velocity *= 0.5
+
     def apply_gravity(self):
         if self.is_jumping:
             self.y_velocity += self.gravity

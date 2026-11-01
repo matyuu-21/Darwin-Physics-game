@@ -1,12 +1,10 @@
-import os 
+import os
 import sys
 
-if  getattr(sys, "frozen", False):
-    BASE_DIR = sys._MEIPASS
-else:
-    BASE_DIR = os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
-
 def asset_path(relative_path):
-    return os.path.join(BASE_DIR, relative_path)
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)

@@ -36,6 +36,8 @@ background_sky = pygame.transform.scale(background_sky, (screen_width, screen_he
 background_sky_level = 0
 background_sky_x = 0
 background_sky_speed = 1
+building_speed = 1
+building_gap = 500
 
 game_speed = 5
 score = 0 
@@ -70,7 +72,7 @@ def reset_game():
       has_shield = False
       double_score_timer = 0.0
       building_speed = 1
-      building_gap = random.randint(250, 500)
+      building_gap = 500
       background_sky_x = 0 
       boss_defeated = False
 
@@ -113,7 +115,9 @@ while True:
                             dinosaur.jump()
 
                   elif game_state == "boss_fight":
-                        if event.key == pygame.K_f and boss_group:
+                        if event.key in (pygame.K_SPACE, pygame.K_UP):
+                              dinosaur.jump()
+                        elif event.key == pygame.K_f and boss_group:
                               shot = projectile.Projectile(
                                     dinosaur.rect.right,
                                     dinosaur.rect.centery
@@ -261,10 +265,26 @@ while True:
                   game_state = "boss_fight"
 
       if game_state == "boss_fight":
+
+            keys = pygame.key.get_pressed()
+
+            if keys[pygame.K_DOWN]:
+                  dinosaur.duck()
+            elif dinosaur.is_ducking:
+                  dinosaur.unduck()
+
             dinosaur_group.update(dt)
             boss_group.update(dt)    
             projectile_group.update()
 
+            for shot in list(projectile_group):
+                  hits = pygame.sprite.spritecollide(
+                        shot, boss_group, False
+                  )
+
+                  if hits:
+                        hits[0].damage(shot.damage)
+                        shot.kill()
       if boss_group:
             current_boss = boss_group.sprites()[0]
 
@@ -273,27 +293,30 @@ while True:
                   boss_hitbox = current_boss.rect.inflate(-30, -30)
 
                   if dino_hitbox.colliderect(boss_hitbox):
-                        lives -= 1
+
+                        if has_shield:
+                              has_shield = False
+                        else:
+                              lives -= 1
 
                         current_boss.state = "recovering"
                         current_boss.image = current_boss.original_image
                         current_boss.rect = current_boss.image.get_rect(
                               center=current_boss.rect.center
                         )
+      if lives <= 0:
+            lives = 0
+            best_score = max(best_score, int(score))
                   
-            for shot in list(projectile_group):
-                  hits = pygame.sprite.spritecollide(
-                        shot, boss_group, False
-                  )
+            boss_group.empty()
+            projectile_group.empty()
 
-                  if hits: 
-                        hits[0].damage(shot.damage)
-                        shot.kill()
+            game_state = "game_over"
 
-            if not boss_group: 
-                  boss_defeated = True
-                  projectile_group.empty()
-                  game_state = "playing"
+      elif game_state == "boss_fight" and not boss_group:
+            boss_defeated = True
+            projectile_group.empty()
+            game_state = "playing"
 #DRAWING 
       screen.fill((255, 255, 255))
 

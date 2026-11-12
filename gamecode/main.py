@@ -37,12 +37,14 @@ ground_x = 0
 
 def load_stage_background():
       current_stage = stage_manager.get_current_stage()
+      raw = pygame.image.load(asset_path(current_stage["background"])).convert()
+      raw = pygame.transform.scale(raw, (screen_width, screen_height))
+      raw.set_alpha(150)
+      baked = pygame.Surface((screen_width, screen_height))
+      baked.fill((255, 255, 255))
+      baked.blit(raw, (0, 0))
+      return baked.convert()
 
-      background = pygame.image.load(asset_path(current_stage["background"])).convert()
-
-      background = pygame.transform.scale(background,(screen_width, screen_height))
-
-      return background
 background_sky = load_stage_background()
 
 background_sky_level = 0
@@ -89,6 +91,7 @@ def reset_game():
       background_sky_x = 0 
       stage_manager.reset()
       background_sky = load_stage_background()
+      restart_spawn_timers()
 
 
 #actual dino
@@ -97,16 +100,33 @@ dinosaur_group.add(dinosaur)
 
 #spawns
 spawn_obstacle = pygame.USEREVENT + 1
-pygame.time.set_timer(spawn_obstacle, 1500)
-
 spawn_cloud = pygame.USEREVENT + 2
-pygame.time.set_timer(spawn_cloud, 3000)
-
 spawn_ptero = pygame.USEREVENT + 3
-pygame.time.set_timer(spawn_ptero, 5000)
-
 spawn_powerup = pygame.USEREVENT + 4
-pygame.time.set_timer(spawn_powerup, 8000)
+
+SPAWN_INTERVALS = {
+      spawn_obstacle: 1500,
+      spawn_cloud: 3000,
+      spawn_ptero: 5000,
+      spawn_powerup: 8000
+}
+
+def restart_spawn_timers():
+      for event_id, ms in SPAWN_INTERVALS.items():
+            pygame.time.set_timer(event_id, ms)
+restart_spawn_timers()
+
+MIN_GAP = 350
+
+def spawn_lane_clear():
+      return all(
+            s.rect.right < screen_width - MIN_GAP
+            for g in (obstacle_group, ptero_group)
+            for s in g
+      )
+
+SHOT_DELAY = 0.25
+shot_cooldown = 0
 
 #main loop hayss
 while True:
@@ -131,12 +151,17 @@ while True:
                   elif game_state == "boss_fight":
                         if event.key in (pygame.K_SPACE, pygame.K_UP):
                               dinosaur.jump()
-                        elif event.key == pygame.K_f and boss_group:
+                        elif event.key == pygame.K_f and boss_group and shot_cooldown <= 0:
+                              shot_cooldown = SHOT_DELAY
                               shot = projectile.Projectile(
                                     dinosaur.rect.right,
                                     dinosaur.rect.centery
                               )
                               projectile_group.add(shot)
+                  elif game_state == "victory":
+                        if event.key in (pygame.K_SPACE, pygame.K_RETURN):
+                              reset_game()
+                              game_state = "playing"
 
             if event.type == pygame.KEYUP:
                   if event.key in (pygame.K_SPACE, pygame.K_UP):
@@ -158,15 +183,16 @@ while True:
             #objectspawns
             if game_state == "playing":
 
-                if event.type == spawn_obstacle:
+                if event.type == spawn_obstacle and spawn_lane_clear():
                         obstacle_group.add(obst.Obstacle())
                 elif event.type == spawn_cloud:
                         cloud_group.add(clouds.Cloud())
-                elif event.type == spawn_ptero:
+                elif event.type == spawn_ptero and spawn_lane_clear():
                         ptero_group.add(obst.Ptero())
                 elif event.type == spawn_powerup:
                       if game_state == "playing":
                             powerup_group.add(powerup.PowerUp())
+
       if game_state in ("playing", "boss_fight"):
 
             if rainbow_timer > 0:
@@ -251,7 +277,7 @@ while True:
                   elif collected_powerup.power_type == "double_score":
                         double_score_timer = 8.0
                   elif collected_powerup.power_type == "super_jump":
-                        dinosaur.jump_normal = -45
+                        dinosaur.jump_strength = -45
                         dinosaur.jump_timer = 8
                   elif collected_powerup.power_type == "rainbow_star":
                         rainbow_timer = rainbow_duration
@@ -294,12 +320,14 @@ while True:
                   current_stage = stage_manager.get_current_stage()
                   obstacle_group.empty()
                   ptero_group.empty()
+                  powerup_group.empty()
 
                   boss_group.add(boss.Boss(1000, 350, current_stage))
                   game_state = "boss_fight"
 
       if game_state == "boss_fight":
-
+            
+            shot_cooldown = max(0, shot_cooldown - dt)
             keys = pygame.key.get_pressed()
 
             if keys[pygame.K_DOWN]:
@@ -355,16 +383,17 @@ while True:
             if result == "next_stage":
                   current_stage = stage_manager.get_current_stage()
                   background_sky = load_stage_background()
+                  restart_spawn_timers()
                   game_state = "playing"
             elif result == "game_complete":
+                  best_score = max(best_score, int(score))
                   game_state = "victory"
 #DRAWING 
-      screen.fill((255, 255, 255))
+      #screen.fill((255, 255, 255))
 
       #screen.blit(background_sky, (background_sky_x, background_sky_level))
       #screen.blit(background_sky, (background_sky_x + screen_width, background_sky_level))
-
-      background_sky.set_alpha(150) #transparency
+ #transparency
       screen.blit(background_sky, (0,0))
 
       #building_group.draw(screen)
@@ -403,6 +432,11 @@ while True:
             )
 
             screen.blit(message, message_rect)
+            hint = game_ui.small_font.render(
+                  "press space/enter to play again", True, (200, 200, 210))
+            screen.blit(hint, hint.get_rect(
+                  center=(screen_width // 2, screen_height // 2 + 70)
+            ))
 
       pygame.display.update()
           

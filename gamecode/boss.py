@@ -7,7 +7,7 @@ class Boss(pygame.sprite.Sprite):
 
         self.boss_type = stage_data["boss"]
 
-        self.original_image = pygame.image.load(stage_data["boss_sprite"]).convert_alpha()
+        self.original_image = pygame.image.load(asset_path(stage_data["boss_sprite"])).convert_alpha()
         self.original_image = pygame.transform.scale(self.original_image, (160, 180))
 
         self.dash_frames = [

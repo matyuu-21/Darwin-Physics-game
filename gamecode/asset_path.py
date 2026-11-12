@@ -1,10 +1,7 @@
-import os
 import sys
+from pathlib import Path
 
 def asset_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
+    base = getattr(sys, "_MEIPASS", None)
+    base = Path(base) if base else Path(__file__).resolve().parent.parent
+    return str(base / relative_path)

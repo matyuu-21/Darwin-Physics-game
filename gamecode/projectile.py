@@ -1,5 +1,6 @@
 import pygame
 from asset_path import asset_path
+from assets import load_image
 
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -7,7 +8,7 @@ class Projectile(pygame.sprite.Sprite):
 
         self.image = pygame.image.load(asset_path("assets/projectile.png")).convert_alpha()
 
-        self.iamge = pygame.transform.scale(self.image, (40, 24))
+        self.image = load_image("assets/projectile.png", (40, 24))
 
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)

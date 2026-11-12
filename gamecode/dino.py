@@ -1,8 +1,9 @@
-import pygame, sys, random
+import pygame, sys, random, math
 from asset_path import asset_path
 
 ground_y = 420
-
+base_gravity = 0.95
+base_jump = -30
 
 class Dinosaur(pygame.sprite.Sprite): #learn classses
     def __init__(self, x, y):
@@ -27,13 +28,24 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.is_rainbow = False
 
         self.y_velocity = 0
-        self.gravity = 0.95
-        self.jump_normal = -30
+        self.gravity = base_gravity
+        self.jump_normal = base_jump
         self.jump_strength = self.jump_normal
         self.jump_timer = 0
 
         self.is_ducking = False
         self.is_jumping = False
+
+    def apply_stage_physics(self, stage):
+        scale = stage["gravity_scale"]
+        self.gravity = base_gravity * scale
+        self.jump_normal = base_jump * math.sqrt(scale)
+
+        if self.jump_timer > 0:
+            self.jump_strength = self.jump_normal * 1.5
+        else:
+            self.jump_strength = self.jump_normal
+
 
     def update(self, dt):
         self.animate()

@@ -55,6 +55,14 @@ class Boss(pygame.sprite.Sprite):
         self.dash_animation_timer = 0
 
         self.recover_speed = 500
+        self.slash_requested = False
+
+        if self.boss_type == "boss_2":
+            self.slash_timer = 4
+        elif self.boss_type == "boss_3":
+            self.slash_timer = 2.5
+        else:
+            self.slash_timer = None
 
     def change_image(self, new_image):
         old_center = self.rect.center
@@ -63,6 +71,17 @@ class Boss(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=old_center)
 
     def update(self, dt):
+
+        if self.slash_timer is not None and self.state == "hovering":
+            self.slash_timer -= dt
+
+            if self.slash_timer <= 0:
+                self.slash_requested = True
+
+                if self.boss_type == "boss_2":
+                    self.slash_timer = 4.5
+                else:
+                    self.slash_timer = 3
 
         if self.state == "hovering":
             self.change_image(self.original_image)
@@ -148,3 +167,34 @@ class Boss(pygame.sprite.Sprite):
 
         pygame.draw.rect(screen, (220, 40, 40), (bar_x, bar_y, health_width, bar_height))
 
+class SlashAttack(pygame.sprite.Sprite):
+    def __init__(self, x, y, speed):
+        super().__init__()
+
+        self.image = pygame.Surface((100, 70), pygame.SRCALPHA)
+
+        pygame.draw.polygon(
+            self.image,
+            (255, 210, 40),
+            [(5, 55), (35, 12), (95, 5), (60, 30), (25, 65)]
+        )
+
+        pygame.draw.lines(
+            self.image,
+            (255, 255, 220),
+            False,
+            [(20, 50), (43, 25), (75, 15)],
+            5
+        )
+
+        self.rect = self.image.get_rect(center=(x, y))
+        self.speed = speed
+        self.hitbox = self.rect.inflate(-20, -20)
+
+    def update(self, dt):
+        self.rect.x -= self.speed * dt
+
+        self.hitbox.center = self.rect.center
+        
+        if self.rect.right < 0:
+            self.kill()

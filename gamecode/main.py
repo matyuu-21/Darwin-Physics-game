@@ -24,6 +24,7 @@ powerup_group = pygame.sprite.Group()
 building_group = pygame.sprite.Group()
 boss_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
+slash_group = pygame.sprite.Group()
 
 #stage manager variable
 stage_manager = StageManager()
@@ -58,14 +59,17 @@ score = 0
 best_score = 0
 lives = 3
 game_state = "menu"
+selected_world = "EARTH"
 has_shield = False
 rainbow_timer = 0
 rainbow_duration = 15
 rainbow_speed = 1.5
 double_score_timer = 0.0
 
-def reset_game():
+def reset_game(stage_index=None):
       global dinosaur, game_speed, score, ground_x, background_x, lives, has_shield, double_score_timer, background_sky_x, building_gap, building_speed, boss_defeated, rainbow_timer, background_sky
+      selected_stage = stage_manager.current_stage_index if stage_index is None else stage_index
+
 
       dinosaur_group.empty()
       obstacle_group.empty()
@@ -75,6 +79,7 @@ def reset_game():
       building_group.empty()
       boss_group.empty()
       projectile_group.empty()
+      slash_group.empty()
 
       dinosaur = dino.Dinosaur(50, other_y)
       dinosaur_group.add(dinosaur)
@@ -90,6 +95,9 @@ def reset_game():
       building_gap = 500
       background_sky_x = 0 
       stage_manager.reset()
+      stage_manager.select_stage(selected_stage)
+      score = stage_manager.get_stage_start_score()
+      dinosaur.apply_stage_physics(stage_manager.get_current_stage())
       background_sky = load_stage_background()
       restart_spawn_timers()
 
@@ -125,7 +133,10 @@ def spawn_lane_clear():
             for s in g
       )
 
-SHOT_DELAY = 0.25
+def gravity_text():
+      stage = stage_manager.get_current_stage()
+      return f"{stage['planet']} | {stage['gravity_scale']}x GRAVITY"
+SHOT_DELAY = 0.15
 shot_cooldown = 0
 
 #main loop hayss
@@ -140,13 +151,30 @@ while True:
 
             if event.type == pygame.KEYDOWN:
 
-                  if game_state in ("menu", "game_over"):
+                  if game_state == "menu":
+                        if event.key in (pygame.K_SPACE, pygame.K_RETURN):
+                              game_state = "stage_select"
+                  elif game_state == "stage_select":
+                        if event.key == pygame.K_ESCAPE:
+                              game_state = "menu"
+                        elif selected_world == "EARTH" and event.key in (pygame.K_1, pygame.K_2, pygame.K_3):
+                              selected_index = event.key - pygame.K_1
+
+                              stages = stage_manager.get_world_stage(selected_world)
+
+                              for stage_index, stage in stages:
+                                    if stage_index == selected_index and stage.get("unlocked", False):
+                                          reset_game(stage_index)
+                                          game_state = "playing"
+                                          break
+
+                  elif game_state == "game_over":
                         if event.key in (pygame.K_SPACE, pygame.K_RETURN):
                               reset_game()
                               game_state = "playing"
                   elif game_state == "playing":
                         if event.key in (pygame.K_SPACE, pygame.K_UP):
-                            dinosaur.jump()
+                              dinosaur.jump()
 
                   elif game_state == "boss_fight":
                         if event.key in (pygame.K_SPACE, pygame.K_UP):
@@ -155,13 +183,13 @@ while True:
                               shot_cooldown = SHOT_DELAY
                               shot = projectile.Projectile(
                                     dinosaur.rect.right,
-                                    dinosaur.rect.centery
+                                    dinosaur.rect.centery,
+                                    score
                               )
                               projectile_group.add(shot)
                   elif game_state == "victory":
                         if event.key in (pygame.K_SPACE, pygame.K_RETURN):
-                              reset_game()
-                              game_state = "playing"
+                              game_state = "menu"
 
             if event.type == pygame.KEYUP:
                   if event.key in (pygame.K_SPACE, pygame.K_UP):
@@ -171,9 +199,24 @@ while True:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 
                   if game_state == "menu":
-                        if game_ui.play_button.collidepoint(event.pos):
-                              reset_game()
-                              game_state = "playing"
+                        for world_index, world_button in enumerate(game_ui.world_buttons):
+                              if world_button.collidepoint(event.pos):
+                                    selected_world = stage_manager.get_worlds()[world_index]["name"]
+                                    game_state = "stage_select"
+                                    break
+
+                  elif game_state == "stage_select":
+                        if game_ui.back_button.collidepoint(event.pos):
+                              game_state = "menu"
+                        else:
+                              for button_index, (stage_index, stage) in enumerate(
+                                    stage_manager.get_world_stage(selected_world)
+                              ):
+                                    if game_ui.stage_buttons[button_index].collidepoint(event.pos):
+                                          if stage.get("unlocked", False)and stage_index is not None:
+                                                reset_game(stage_index)
+                                                game_state = "playing"
+                                          break
 
                   elif game_state == "game_over":
                         if game_ui.restart_button.collidepoint(event.pos):
@@ -277,8 +320,8 @@ while True:
                   elif collected_powerup.power_type == "double_score":
                         double_score_timer = 8.0
                   elif collected_powerup.power_type == "super_jump":
-                        dinosaur.jump_strength = -45
-                        dinosaur.jump_timer = 8
+                        dinosaur.jump_strength = dinosaur.jump_normal * 1.2
+                        dinosaur.jump_timer = 5
                   elif collected_powerup.power_type == "rainbow_star":
                         rainbow_timer = rainbow_duration
                         dinosaur.is_rainbow = True
@@ -338,6 +381,24 @@ while True:
             dinosaur_group.update(dt)
             boss_group.update(dt)    
             projectile_group.update()
+            slash_group.update(dt)
+
+            for enemy in boss_group:
+                  if enemy.slash_requested:
+
+                        if enemy.boss_type == "boss_2":
+                              slash_speed = 750
+                        else:
+                              slash_speed = 950
+
+                        slash_group.add(
+                              boss.SlashAttack(
+                                    enemy.rect.left,
+                                    420,
+                                    slash_speed
+                              )
+                        )
+                        enemy.slash_requested = False
 
             for shot in list(projectile_group):
                   hits = pygame.sprite.spritecollide(
@@ -347,6 +408,17 @@ while True:
                   if hits:
                         hits[0].damage(shot.damage)
                         shot.kill()
+
+            for slash in list(slash_group):
+                  if dinosaur.get_hitbox().colliderect(slash.hitbox):
+
+                        if not dinosaur.is_rainbow:
+                              if has_shield:
+                                    has_shield = False
+                              else:
+                                    lives -= 1
+
+                        slash.kill()
       if game_state == "boss_fight" and boss_group:
             current_boss = boss_group.sprites()[0]
 
@@ -372,16 +444,19 @@ while True:
                   
             boss_group.empty()
             projectile_group.empty()
+            slash_group.empty()
 
             game_state = "game_over"
 
       elif game_state == "boss_fight" and not boss_group:
             projectile_group.empty()
+            slash_group.empty()
 
             result = stage_manager.complete_boss()
 
             if result == "next_stage":
                   current_stage = stage_manager.get_current_stage()
+                  dinosaur.apply_stage_physics(current_stage)
                   background_sky = load_stage_background()
                   restart_spawn_timers()
                   game_state = "playing"
@@ -408,19 +483,29 @@ while True:
       powerup_group.draw(screen)
       boss_group.draw(screen)
       projectile_group.draw(screen)
+      slash_group.draw(screen)
 
       if game_state == "boss_fight" and boss_group:
             boss_enemy = next(iter(boss_group))
             boss_enemy.health_bar(screen)
 
       if game_state == "playing":
-            game_ui.draw_hud(score, best_score, lives)
+            game_ui.draw_hud(score, best_score, lives, gravity_text=gravity_text())
       elif game_state == "menu":
-            game_ui.draw_menu()
+            game_ui.draw_world_select(stage_manager.get_worlds())
+      elif game_state == "stage_select":
+            selected_world_data = next(
+                  world for world in stage_manager.get_worlds()
+                  if world["name"] == selected_world
+            )
+            game_ui.draw_stage_select(
+                  selected_world_data,
+                  stage_manager.get_world_stage(selected_world)
+            )
       elif game_state == "game_over":
             game_ui.draw_game_over(score, best_score)
       elif game_state == "boss_fight":
-            game_ui.draw_hud(score, best_score, lives)
+            game_ui.draw_hud(score, best_score, lives, gravity_text=gravity_text())
       elif game_state == "victory":
             screen.fill((20, 25, 45))
 
@@ -433,7 +518,7 @@ while True:
 
             screen.blit(message, message_rect)
             hint = game_ui.small_font.render(
-                  "press space/enter to play again", True, (200, 200, 210))
+                  "press space/enter to return to menu", True, (200, 200, 210))
             screen.blit(hint, hint.get_rect(
                   center=(screen_width // 2, screen_height // 2 + 70)
             ))

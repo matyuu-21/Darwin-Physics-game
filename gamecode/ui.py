@@ -11,6 +11,7 @@ class GameUI:
         self.game_font = pygame.font.Font(None, 40)
         self.title_font = pygame.font.Font(None, 90)
         self.small_font = pygame.font.Font(None, 30)
+        self.stage_font = pygame.font.Font(None, 45)
 
         self.black = (25, 30, 40)
         self.white = (255, 255, 255)
@@ -34,6 +35,18 @@ class GameUI:
 
         self.play_button = pygame.Rect(490, 390, 300, 70)
         self.restart_button = pygame.Rect(490, 420, 300, 70)
+
+        self.world_buttons = [
+            pygame.Rect(105, 300, 320, 230),
+            pygame.Rect(480, 300, 320, 230),
+            pygame.Rect(855, 300, 320, 230)
+        ]
+        self.stage_buttons = [
+            pygame.Rect(105, 315, 320, 190),
+            pygame.Rect(480, 315, 320, 190),
+            pygame.Rect(855, 315, 320, 190)
+        ]
+        self.back_button = pygame.Rect(45, 45, 150, 55)
 
     def draw_text(self, text, font, color, x, y):
         image = font.render(text, True, color)
@@ -91,7 +104,7 @@ class GameUI:
                 heart_image, (x, self.heart_y)
             )
 
-    def draw_hud(self, score, best_score, lives):
+    def draw_hud(self, score, best_score, lives, gravity_text=""):
         self.draw_health(lives)
 
         score_image = self.game_font.render(
@@ -110,6 +123,55 @@ class GameUI:
         )
         self.screen.blit(best_image, best_rect)
 
+        if gravity_text:
+            grav_image = self.small_font.render(gravity_text, True, self.gray)
+            grav_rect = grav_image.get_rect(midright=(self.score_x, self.best_y + 28))
+            self.screen.blit(grav_image, grav_rect)
+
+    def draw_world_select(self, worlds):
+        self.screen.fill((255, 235, 245))
+        self.draw_text("DARWIN'S JOURNEY", self.title_font, self.black,
+                       self.screen_width // 2, 110)
+        self.draw_text("SELECT YOUR WORLD", self.game_font, self.gray,
+                       self.screen_width // 2, 205)
+
+        for index, world in enumerate(worlds):
+            rect = self.world_buttons[index]
+            available = world["available"]
+            color = self.orange if available else (155, 160, 170)
+            pygame.draw.rect(self.screen, color, rect, border_radius = 18)
+            pygame.draw.rect(self.screen, self.white, rect, 4, border_radius = 18)
+            self.draw_text(world["name"], self.title_font, self. white,
+                           rect.centerx, rect.centery)
+        self.draw_text("Choose a world", self.small_font, self.gray, self.screen_width // 2, 610)
+
+    def draw_stage_select(self, world, stages):
+        self.screen.fill((255, 235, 245))
+        self.draw_button(self.back_button, "BACK")
+        self.draw_text(world["name"], self.title_font, self.black,
+                       self.screen_width // 2, 125)
+        self.draw_text("SELECT A STAGE", self.game_font, self.gray,
+                       self.screen_width // 2, 205)
+
+        for button_index, (stage_indx, stage) in enumerate(stages):
+            rect = self.stage_buttons[button_index]
+            available = stage.get("unlocked", True)
+            color = self.orange if available else (155, 160, 170)
+            pygame.draw.rect(self.screen, color, rect, border_radius = 18)
+            pygame.draw.rect(self.screen, self.white, rect, 4, border_radius = 18)
+            self.draw_text(str(button_index + 1), self.title_font, self. white,
+                           rect.centerx, rect.centery - 35)
+            self.draw_text(stage["name"], self.stage_font, self. white,
+                           rect.centerx, rect.centery + 30)
+            status = "BOSS STAGE" if available else "LOCKED"
+            self.draw_text(status, self.small_font, self.white, rect.centerx, rect.bottom - 30)
+
+        if world["name"] == "EARTH":
+            hint = "Each Classroom ends with a boss fight"
+        else:
+            hint = "Planet stages and bosses soon"
+        self.draw_text(hint, self.small_font, self.gray, self.screen_width // 2, 590)
+    
     def draw_menu(self):
         overlay = pygame.Surface(
         (self.screen_width, self.screen_height), 

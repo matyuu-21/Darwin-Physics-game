@@ -1,5 +1,4 @@
 import pygame, random
-from asset_path import asset_path
 from assets import load_image 
 
 class PowerUp(pygame.sprite.Sprite):
@@ -23,10 +22,6 @@ class PowerUp(pygame.sprite.Sprite):
         self.power_type = random.choices(self.TYPES,
             weights=[25,25,20,20,10], k=1
             )[0]
-
-        self.image = pygame.image.load(
-            asset_path(powerup_images[self.power_type])
-        ).convert_alpha()
 
         self.image = load_image(powerup_images[self.power_type], (100, 100))
 

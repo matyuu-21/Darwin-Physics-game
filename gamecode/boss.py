@@ -146,6 +146,29 @@ class Boss(pygame.sprite.Sprite):
                 self.attack_timer = self.attack_interval
                 self.prepare_timer = 0.67
                 self.hover_time = 0
+    def draw_warning(self, screen):
+
+        if self.state != "preparing":
+            return
+
+        flash = (pygame.time.get_ticks() // 150) % 2 == 0
+
+        if flash:
+            warning_color = (255, 60, 40)
+        else:
+            warning_color = (255, 200, 40)
+
+        warning_surface = pygame.Surface((screen.get_width(), 55), pygame.SRCALPHA)
+        warning_surface.fill((warning_color[0], warning_color[1], warning_color[2], 65))
+        screen.blit(warning_surface, (0, 75))
+
+        pygame.draw.rect(screen, warning_color, (0, 75, screen.get_width(), 55), 4)
+
+        font = pygame.font.Font(None, 40)
+        text = font.render("WARNING! DASH INCOMING!", True, warning_color)
+        text_rect = text.get_rect(center=(screen.get_width() // 2, 100))
+
+        screen.blit(text, text_rect)
 
     def damage(self, amount):
         self.health = max(0, self.health - amount)

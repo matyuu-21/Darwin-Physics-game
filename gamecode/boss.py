@@ -56,6 +56,8 @@ class Boss(pygame.sprite.Sprite):
 
         self.recover_speed = 500
         self.slash_requested = False
+        self.slash_warning_timer = 0
+        self.slash_warning_duration = 0.7
 
         if self.boss_type == "boss_2":
             self.slash_timer = 4
@@ -72,11 +74,19 @@ class Boss(pygame.sprite.Sprite):
 
     def update(self, dt):
 
+        # Count down the warning before launching a slash
+        if self.slash_warning_timer > 0:
+            self.slash_warning_timer -= dt
+
+            if self.slash_warning_timer <= 0:
+                self.slash_warning_timer = 0
+                self.slash_requested = True
+
         if self.slash_timer is not None and self.state == "hovering":
             self.slash_timer -= dt
 
-            if self.slash_timer <= 0:
-                self.slash_requested = True
+            if self.slash_timer <= 0 and self.slash_warning_timer <= 0:
+                self.slash_warning_timer = self.slash_warning_duration
 
                 if self.boss_type == "boss_2":
                     self.slash_timer = 4.5
@@ -168,6 +178,46 @@ class Boss(pygame.sprite.Sprite):
         text = font.render("WARNING! DASH INCOMING!", True, warning_color)
         text_rect = text.get_rect(center=(screen.get_width() // 2, 100))
 
+        screen.blit(text, text_rect)
+
+    def draw_warning(self, screen):
+        # Show a warning only while a dash or slash is being prepared
+        if self.state == "preparing":
+            warning_text = "WARNING! BOSS DASH INCOMING!"
+        elif self.slash_warning_timer > 0:
+            warning_text = "WARNING! SLASH INCOMING!"
+        else:
+            return
+
+        # Alternate the warning color to make it flash
+        flash = (pygame.time.get_ticks() // 150) % 2 == 0
+        warning_color = (255, 60, 40) if flash else (255, 200, 40)
+
+        # Draw a translucent banner
+        warning_surface = pygame.Surface(
+            (screen.get_width(), 55),
+            pygame.SRCALPHA
+        )
+        warning_surface.fill((
+            warning_color[0],
+            warning_color[1],
+            warning_color[2],
+            65
+        ))
+        screen.blit(warning_surface, (0, 75))
+
+        pygame.draw.rect(
+            screen,
+            warning_color,
+            (0, 75, screen.get_width(), 55),
+            4
+        )
+
+        font = pygame.font.Font(None, 42)
+        text = font.render(warning_text, True, warning_color)
+        text_rect = text.get_rect(
+            center=(screen.get_width() // 2, 102)
+        )
         screen.blit(text, text_rect)
 
     def damage(self, amount):

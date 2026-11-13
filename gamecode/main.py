@@ -485,6 +485,10 @@ while True:
       projectile_group.draw(screen)
       slash_group.draw(screen)
 
+      if game_state == "boss_fight":
+            for enemy in boss_group:
+                  enemy.draw_warning(screen)
+
       if game_state == "boss_fight" and boss_group:
             boss_enemy = next(iter(boss_group))
             boss_enemy.health_bar(screen)

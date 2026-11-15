@@ -41,9 +41,15 @@ ground_x = 0
 
 def load_background(background_path):
       
-      raw = pygame.image.load(
-            asset_path(background_path)
-      ).convert()
+      try:
+            raw = pygame.image.load(
+                  asset_path(background_path)
+            ).convert()
+      except (FileNotFoundError, pygame.error):
+            
+            raw = pygame.image.load(
+                  asset_path("assets/skybg.png")
+            ).convert()
       
       raw = pygame.transform.scale(
             raw, (screen_width, screen_height)
@@ -59,7 +65,7 @@ def load_background(background_path):
 
 def load_stage_background():
       
-      current_Stage = stage_manager.get_current_stage()
+      current_stage = stage_manager.get_current_stage()
       
       return load_background(current_stage["background"])
 
@@ -203,6 +209,13 @@ while True:
                   elif game_state in ("playing", "bonus_stage"):
                         if event.key in (pygame.K_SPACE, pygame.K_UP):
                               dinosaur.jump()
+                        elif event.key == pygame.K_p and game_state == "playing":
+                              pipe_group.add(pipe.Pipe())
+                              print("pipe spawned") #testing
+
+                        elif event.key == pygame.K_o and game_state == "playing":
+                              bonus_coin_group.add(pipe.BonusCoin(1100, 350))
+                              print("coins spawned") #testing
 
                   elif game_state == "boss_fight":
                         if event.key in (pygame.K_SPACE, pygame.K_UP):
@@ -229,7 +242,7 @@ while True:
                   if game_state == "menu":
                         for world_index, world_button in enumerate(game_ui.world_buttons):
                               if world_button.collidepoint(event.pos):
-                                    selected_world = stage_manager.get_worlds()[world_index]["name"]
+                                    selected_world = stage_manager.get_world()[world_index]["name"]
                                     game_state = "stage_select"
                                     break
 
@@ -282,7 +295,19 @@ while True:
 
       if game_state == "playing":
             keys = pygame.key.get_pressed()
-
+            
+            near_pipe = any(
+                  dinosaur.get_hitbox().colliderect(
+                        active_pipe.rect.inflate(100, 40)
+                  )
+                  for active_pipe in pipe_group
+            )
+            
+            if keys[pygame.K_DOWN] and near_pipe:
+                  game_state = "bonus_stage"
+                  bonus_timer = bonus_duration
+                  pipe_group.empty()
+                  
             if keys[pygame.K_DOWN]:
                   dinosaur.duck()
             elif dinosaur.is_ducking:
@@ -370,7 +395,7 @@ while True:
             hit_cactus = None
             hit_ptero = None
             for obstacle in obstacle_group:
-                  if dino_hitbox.colliderect(obstacle.rect):
+                  if dino_hitbox.colliderect(obstacle.hitbox):
                         hit_cactus = obstacle
                         break
             for ptero in ptero_group:
@@ -395,13 +420,12 @@ while True:
                   best_score = max(best_score, int(score))
                   game_state = "game_over"
 
-            if game_state == "playing" and stage_manager.check_boss_trigger(score):
+            if game_state == "playing" and stage_manager.check_boss_trigger(score, dt):
                   
                   boss_data = stage_manager.choose_boss(score)
                   
                   if boss_data:
-
-                        current_stage = stage_manager.get_current_stage()
+                        
                         obstacle_group.empty()
                         ptero_group.empty()
                         powerup_group.empty()
@@ -435,19 +459,6 @@ while True:
             
             shot_cooldown = max(0, shot_cooldown - dt)
             keys = pygame.key.get_pressed()
-
-            near_pipe = any(
-                  dinosaur.get_hitbox().colliderect(
-                        active_pipe.rect.inflate(100, 40)  # pipe collision rectangle
-                  )
-                  for active_pipe in pipe_group
-            )
-            
-            if keys[pygame.K_DOWN] and near_pipe:
-                  game_state = "bonus_stage"
-                  bonus_timer = bonus_duration
-                  
-                  pipe_group.empty()
 
             dinosaur_group.update(dt)
             boss_group.update(dt)    
@@ -523,7 +534,7 @@ while True:
             projectile_group.empty()
             slash_group.empty()
 
-            result = stage_manager.complete_boss(current_boss_type)
+            result = stage_manager.complete_boss(stage_manager.current_boss["boss"])
             current_boss_type = None
             if result == "boss_defeated":
                   backgroundD_sky = load_stage_background()
@@ -592,7 +603,9 @@ while True:
             boss_group.draw(screen)
             projectile_group.draw(screen)
             slash_group.draw(screen)
-
+            pipe_group.draw(screen)
+            
+            
       if game_state == "boss_fight":
             for enemy in boss_group:
                   enemy.draw_warning(screen)
@@ -606,10 +619,10 @@ while True:
       elif game_state == "bonus_stage":
             pass
       elif game_state == "menu":
-            game_ui.draw_world_select(stage_manager.get_worlds())
+            game_ui.draw_world_select(stage_manager.get_world())
       elif game_state == "stage_select":
             selected_world_data = next(
-                  world for world in stage_manager.get_worlds()
+                  world for world in stage_manager.get_world()
                   if world["name"] == selected_world
             )
             game_ui.draw_stage_select(

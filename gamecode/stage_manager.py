@@ -114,20 +114,19 @@ class StageManager:
 
     def select_stage(self, stage_index):
 
-        if 0 <= stage_index < len(self.stages):
+        if not (0 <= stage_index < len(self.stages)):
+            return False
 
-            if self.stages[stage_index]["unlocked"]:
-
-                self.current_stage_index = stage_index
-                self.boss_started = False
-                self.game_completed = False
-                self.defeated_bosses = []
-                self.spawn_check_timer = 0
-                self.boss_cooldown = 0
-
-                return True
-
-        return False
+        if not self.stages[stage_index]["unlocked"]:
+            return False
+        
+        self.current_stage_index = stage_index
+        self.boss_started = False
+        self.game_completed = False
+        
+        
+        return True
+            
 
     def get_stage_start_score(self):
         return self.get_current_stage().get("start_score", 0)
@@ -162,7 +161,7 @@ class StageManager:
         self.spawn_check_timer = 0
 
         if score < 200:
-            chance = 0.05
+            chance = 1 #0.05 if fr
         elif score < 300:
             chance = 0.15
         elif score < 400:
@@ -171,8 +170,11 @@ class StageManager:
             chance = 0.45
 
         if random.random() < chance:
-            self.boss_started = True
-            return True
+            self.current_boss = self.choose_boss(score)
+            
+            if self.current_boss:
+                self.boss_started = True
+                return True        
 
         return False
 
@@ -247,7 +249,7 @@ class StageManager:
         self.game_completed = False
 
         self.spawn_check_timer = 0
-        self.spawn_check_interval = 5
+        self.spawn_check_interval = 1 #5 sec is fr
         self.boss_cooldown = 0
     
     

@@ -61,4 +61,4 @@ class BonusCoin(pygame.sprite.Sprite):
         self.rect.x = round(self.pos_x)
 
         if self.rect.right < 0:
-            self.kill
+            self.kill()

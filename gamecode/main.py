@@ -4,6 +4,8 @@ import dino, obst, clouds, ui, powerup, buildings, boss, projectile, pipe
 from asset_path import asset_path
 from stage_manager import StageManager
 
+DEBUG = False
+
 pygame.init()
 
 #screen variables
@@ -124,7 +126,6 @@ def reset_game(stage_index=None):
       background_sky_x = 0 
       bonus_timer = 0
       stage_manager.reset()
-      current_boss_type = None
       stage_manager.select_stage(selected_stage)
       score = stage_manager.get_stage_start_score()
       dinosaur.apply_stage_physics(stage_manager.get_current_stage())
@@ -167,9 +168,11 @@ def spawn_lane_clear():
 
 def gravity_text():
       stage = stage_manager.get_current_stage()
-      return f"{stage['planet']} | {stage['gravity_scale']}x GRAVITY"
+      return f"{stage['planet']} | {dinosaur.gravity_scale:g}x GRAVITY"
+
 SHOT_DELAY = 0.15
 shot_cooldown = 0
+bonus_coin_timer = 0
 
 
 
@@ -209,11 +212,11 @@ while True:
                   elif game_state in ("playing", "bonus_stage"):
                         if event.key in (pygame.K_SPACE, pygame.K_UP):
                               dinosaur.jump()
-                        elif event.key == pygame.K_p and game_state == "playing":
+                        elif event.key == pygame.K_p and game_state == "playing" and DEBUG:
                               pipe_group.add(pipe.Pipe())
                               print("pipe spawned") #testing
 
-                        elif event.key == pygame.K_o and game_state == "playing":
+                        elif event.key == pygame.K_o and game_state == "playing" and DEBUG:
                               bonus_coin_group.add(pipe.BonusCoin(1100, 350))
                               print("coins spawned") #testing
 
@@ -306,6 +309,7 @@ while True:
             if keys[pygame.K_DOWN] and near_pipe:
                   game_state = "bonus_stage"
                   bonus_timer = bonus_duration
+                  bonus_coin_timer = 0
                   pipe_group.empty()
                   
             if keys[pygame.K_DOWN]:
@@ -422,7 +426,7 @@ while True:
 
             if game_state == "playing" and stage_manager.check_boss_trigger(score, dt):
                   
-                  boss_data = stage_manager.choose_boss(score)
+                  boss_data = stage_manager.current_boss
                   
                   if boss_data:
                         
@@ -435,12 +439,22 @@ while True:
                         boss_group.add(boss.Boss(1000, 350, boss_data))
                         game_state = "boss_fight"
                   
-            elif game_state == "bonus_stage":
-                  
+      elif game_state == "bonus_stage":
+
+                  dinosaur.unduck()
                   dinosaur_group.update(dt)
                   
+                  bonus_coin_timer -= dt
+
+                  if bonus_coin_timer <= 0:
+                        bonus_coin_timer = random.uniform(0.35, 0.8)
+
+                        bonus_coin_group.add(
+                              pipe.BonusCoin(1300, random.choice([390, 320, 250]))
+                        )
+
                   bonus_coin_group.update(max(4, game_speed))
-                  
+
                   bonus_timer -= dt
                   
                   for coin in list(bonus_coin_group):
@@ -461,7 +475,19 @@ while True:
             keys = pygame.key.get_pressed()
 
             dinosaur_group.update(dt)
-            boss_group.update(dt)    
+
+            for enemy in boss_group:
+                  enemy.player_x = dinosaur.rect.centerx
+            
+            boss_group.update(dt)
+
+            for enemy in boss_group:
+                  if enemy.pending_gravity_scale is not None:
+                        dinosaur.apply_stage_physics({
+                              "gravity_scale": enemy.pending_gravity_scale
+                        })
+                        enemy.pending_gravity_scale = None
+
             projectile_group.update()
             slash_group.update(dt)
 
@@ -473,13 +499,22 @@ while True:
                         else:
                               slash_speed = 950
 
-                        slash_group.add(
-                              boss.SlashAttack(
-                                    enemy.rect.left,
-                                    420,
-                                    slash_speed
+                        if enemy.boss_type == "boss_2":
+                              slash_group.add(
+                                    boss.ParabolaSlash(
+                                          enemy.slash_origin,
+                                          enemy.slash_target,
+                                          slash_speed
+                                    )
                               )
-                        )
+                        else:
+                              slash_group.add(
+                                    boss.SlashAttack(
+                                          enemy.rect.left,
+                                          420,
+                                          slash_speed
+                                    )
+                              )
                         enemy.slash_requested = False
 
             for shot in list(projectile_group):
@@ -516,6 +551,7 @@ while True:
                                     lives -= 1
 
                         current_boss.state = "recovering"
+                        current_boss.dash_phase = "approach"
                         current_boss.image = current_boss.original_image
                         current_boss.rect = current_boss.image.get_rect(
                               center=current_boss.rect.center
@@ -523,6 +559,7 @@ while True:
       if lives <= 0:
             lives = 0
             best_score = max(best_score, int(score))
+            dinosaur.apply_stage_physics(stage_manager.get_current_stage())
                   
             boss_group.empty()
             projectile_group.empty()
@@ -536,12 +573,12 @@ while True:
 
             result = stage_manager.complete_boss(stage_manager.current_boss["boss"])
             current_boss_type = None
+            dinosaur.apply_stage_physics(stage_manager.get_current_stage())
             if result == "boss_defeated":
-                  backgroundD_sky = load_stage_background()
+                  background_sky = load_stage_background()
+                  restart_spawn_timers()
                   game_state = "playing"
             elif result == "next_stage":
-                  current_stage = stage_manager.get_current_stage()
-                  dinosaur.apply_stage_physics(current_stage)
                   background_sky = load_stage_background()
                   restart_spawn_timers()
                   game_state = "playing"

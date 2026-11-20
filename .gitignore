@@ -10,3 +10,7 @@ gamecode/*.spec
 # Virtual environments
 .venv/
 venv/
+
+build/
+dist/
+__pycache__/

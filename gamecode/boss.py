@@ -1,6 +1,25 @@
 import pygame, math
 from asset_path import asset_path
 
+boss_functions =  {
+    "boss_1": "f(x) = mx + b",
+    "boss_2": "f(x) = ax^2 + bx + c",
+    "boss_3": "f(x) = A sin(Bx)"
+
+}
+
+def parabola_point(origin, target, speed, gravity, t):
+    sx, sy = origin
+    tx, ty = target
+
+    T = (sx - tx) / speed
+    vy = (ty - sy - 0.5 * gravity * T * T) / T
+
+    return (
+        sx - speed * t,
+        sy + vy * t + 0.5 * gravity * t * t
+    )
+
 class Boss(pygame.sprite.Sprite):
     def __init__(self, x, y, stage_data):
         super().__init__()
@@ -47,8 +66,22 @@ class Boss(pygame.sprite.Sprite):
         self.hover_amp = 35
         self.hover_speed = 2.5
 
+        if self.boss_type == "boss_3":
+            self.hover_amp = 70
+            self.hover_speed = 3
+        
+        self.pos_x = float(self.rect.x)
+        self.dash_phase = "approach"
+        self.hanging_timer = 0.0
+
         self.attack_timer = self.attack_interval
         self.prepare_timer = 0.67
+
+        self.gravity_shift_timer = 4 if self.boss_type == "boss_3" else None
+        self.gravity_shift_warning_timer = 0
+
+        self.pending_gravity_scale = None
+        self.next_gravity_scale = 0.5
 
         self.dash_frame_index = 0
         self.dash_animation_speed = 0.08
@@ -58,6 +91,10 @@ class Boss(pygame.sprite.Sprite):
         self.slash_requested = False
         self.slash_warning_timer = 0
         self.slash_warning_duration = 0.7
+
+        self.player_x = 100
+        self.slash_origin = None
+        self.slash_target = None
 
         if self.boss_type == "boss_2":
             self.slash_timer = 4
@@ -73,7 +110,30 @@ class Boss(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=old_center)
 
     def update(self, dt):
+        if self.boss_type == "boss_3":
 
+            self.gravity_shift_timer -= dt
+
+            if (
+                self.gravity_shift_timer <= 0
+                and self.gravity_shift_warning_timer <= 0
+            ):
+                self.gravity_shift_warning_timer = 1
+                self.gravity_shift_timer = 5
+
+            if self.gravity_shift_warning_timer > 0:
+                self.gravity_shift_warning_timer -= dt
+
+                if self.gravity_shift_warning_timer <= 0:
+                    self.gravity_shift_warning_timer = 0
+
+                    self.pending_gravity_scale = self.next_gravity_scale
+
+                    if self.next_gravity_scale == 0.5:
+                        self.next_gravity_scale = 1.5
+                    else:
+                        self.next_gravity_scale = 0.5
+                        
         # Count down the warning before launching a slash
         if self.slash_warning_timer > 0:
             self.slash_warning_timer -= dt
@@ -88,6 +148,9 @@ class Boss(pygame.sprite.Sprite):
             if self.slash_timer <= 0 and self.slash_warning_timer <= 0:
                 self.slash_warning_timer = self.slash_warning_duration
 
+                self.slash_origin = self.rect.midleft
+                self.slash_target = (self.player_x, 420)
+
                 if self.boss_type == "boss_2":
                     self.slash_timer = 4.5
                 else:
@@ -98,9 +161,15 @@ class Boss(pygame.sprite.Sprite):
 
             self.hover_time += dt
 
-            self.rect.centery = (
-                self.base_y + math.sin(self.hover_time * self.hover_speed) * self.hover_amp
+            hover_y = (
+                self.base_y
+                + math.sin(self.hover_time * self.hover_speed) * self.hover_amp
             )
+
+            if self.boss_type == "boss_3":
+                hover_y = max(90, min(630, hover_y))
+
+            self.rect.centery = round(hover_y)
 
             self.attack_timer -= dt
 
@@ -115,6 +184,10 @@ class Boss(pygame.sprite.Sprite):
             if self.prepare_timer <= 0:
                 self.state = "dashing"
 
+            if self.boss_type == "boss_3":
+                self.dash_phase = "approach"
+                self.pos_x = float(self.rect.x)
+
                 self.dash_frame_index = 0
                 self.dash_animation_timer = 0
 
@@ -123,25 +196,81 @@ class Boss(pygame.sprite.Sprite):
                 )
 
         elif self.state == "dashing":
-            self.rect.x -= self.dash_speed * dt
 
-            self.dash_animation_timer += dt
+            if self.boss_type == "boss_3":
 
-            if self.dash_animation_timer >= self.dash_animation_speed:
-                self.dash_animation_timer -= self.dash_animation_speed
+                if self.dash_phase == "approach":
 
-                self.dash_frame_index = (
-                    self.dash_frame_index + 1
-                ) % len(self.dash_frames)
+                    stop_x = self.player_x + 320
+                    distance = self.pos_x - stop_x
 
-                self.change_image(
-                    self.dash_frames[self.dash_frame_index]
-                )
+                    if distance < 10:
+                        self.pos_x = float(stop_x)
+                        self.rect.x = round(self.pos_x)
+
+                        self.state = "hanging"
+                        self.hanging_timer = 0.6
+                    else:
+                        approach_speed = max(
+                            140, min(self.dash_speed, 3 * distance)
+                        )
+
+                        self.pos_x = max(
+                            stop_x,
+                            self.pos_x - approach_speed * dt
+                        )
+
+                        self.rect.x = round(self.pos_x)
+
+                        if self.pos_x - stop_x < 10:
+                            self.pos_x = float(stop_x)
+                            self.rect.x = round(self.pos_x)
+
+                            self.state = "hanging"
+                            self.hanging_timer = 0.6
+                elif self.dash_phase == "lunge":
+
+                    self.pos_x -= self.dash_speed * 1.15 * dt
+                    self.rect.x = round(self.pos_x)
+
+            else:
+                self.rect.x -= self.dash_speed * dt
+
+            if self.state == "dashing":
+                self.dash_animation_timer += dt
+
+                if self.dash_animation_timer >= self.dash_animation_speed:
+                    self.dash_animation_timer -= self.dash_animation_speed
+
+                    self.dash_frame_index = (
+                        self.dash_frame_index + 1
+                    ) % len(self.dash_frames)
+
+                    self.change_image(
+                        self.dash_frames[self.dash_frame_index]
+                    )
 
             if self.rect.right < 0:
                 self.change_image(self.original_image)
                 self.state = "recovering"
 
+        elif self.state == "hanging":
+            self.hanging_timer -= dt
+            self.image = self.original_image.copy()
+
+            if (pygame.time.get_ticks() // 100) % 2 == 0:
+                self.image.set_alpha(90)
+
+            if self.hanging_timer <= 0:
+                self.state = "dashing"
+                self.dash_phase = "lunge"
+
+                self.dash_frame_index = 0
+                self.dash_animation_timer = 0
+
+                self.change_image(
+                    self.dash_frames[self.dash_frame_index]
+                )
         elif self.state == "recovering":
             self.change_image(self.original_image)
 
@@ -156,33 +285,16 @@ class Boss(pygame.sprite.Sprite):
                 self.attack_timer = self.attack_interval
                 self.prepare_timer = 0.67
                 self.hover_time = 0
-    def draw_warning(self, screen):
-
-        if self.state != "preparing":
-            return
-
-        flash = (pygame.time.get_ticks() // 150) % 2 == 0
-
-        if flash:
-            warning_color = (255, 60, 40)
-        else:
-            warning_color = (255, 200, 40)
-
-        warning_surface = pygame.Surface((screen.get_width(), 55), pygame.SRCALPHA)
-        warning_surface.fill((warning_color[0], warning_color[1], warning_color[2], 65))
-        screen.blit(warning_surface, (0, 75))
-
-        pygame.draw.rect(screen, warning_color, (0, 75, screen.get_width(), 55), 4)
-
-        font = pygame.font.Font(None, 40)
-        text = font.render("WARNING! DASH INCOMING!", True, warning_color)
-        text_rect = text.get_rect(center=(screen.get_width() // 2, 100))
-
-        screen.blit(text, text_rect)
+                self.dash_phase = "approach"
+                self.pos_x = float(self.rect.x)
 
     def draw_warning(self, screen):
         # Show a warning only while a dash or slash is being prepared
-        if self.state == "preparing":
+        if self.gravity_shift_warning_timer > 0:
+            warning_text = "WARNING! GRAVITY SHIFT!"
+        elif self.state == "hanging":
+            warning_text = "WARNING LUNGE INCOMING!"
+        elif self.state == "preparing":
             warning_text = "WARNING! BOSS DASH INCOMING!"
         elif self.slash_warning_timer > 0:
             warning_text = "WARNING! SLASH INCOMING!"
@@ -220,6 +332,37 @@ class Boss(pygame.sprite.Sprite):
         )
         screen.blit(text, text_rect)
 
+        if (
+            self.boss_type == "boss_2"
+            and self.slash_warning_timer > 0
+            and self.slash_origin is not None
+            and self.slash_target is not None
+        ):
+            speed = 750
+            gravity = 1200
+
+            sx, sy = self.slash_origin
+            tx, ty = self.slash_target
+            T = (sx - tx) / speed
+
+            for i in range(18):
+                t = T * i / 17
+                
+                x, y = parabola_point(
+                    self.slash_origin,
+                    self.slash_target,
+                    speed,
+                    gravity,
+                    t
+                )
+
+                pygame.draw.circle(
+                    screen,
+                    (255, 255, 255),
+                    (round(x), round(y)),
+                    4
+                )
+
     def damage(self, amount):
         self.health = max(0, self.health - amount)
 
@@ -240,6 +383,16 @@ class Boss(pygame.sprite.Sprite):
 
         pygame.draw.rect(screen, (220, 40, 40), (bar_x, bar_y, health_width, bar_height))
 
+        function_text = boss_functions.get(self.boss_type, "")
+
+        if function_text:
+            font = pygame.font.Font(None, 26)
+            label = font.render(function_text, True, (235, 225, 220))
+            label_rect = label.get_rect(
+                center=(screen.get_width() // 2, bar_y + bar_height + 14)
+                )
+            screen.blit(label, label_rect)   
+        
 class SlashAttack(pygame.sprite.Sprite):
     def __init__(self, x, y, speed):
         super().__init__()
@@ -271,3 +424,35 @@ class SlashAttack(pygame.sprite.Sprite):
         
         if self.rect.right < 0:
             self.kill()
+
+class ParabolaSlash(SlashAttack):
+    def __init__(self, origin, target, speed, gravity = 1200):
+        super().__init__(origin[0], origin[1], speed)
+
+        self.origin = origin
+        self.target = target
+        self.speed = speed
+        self.gravity = gravity
+        self.t = 0
+
+    def update(self, dt):
+        self.t += dt
+
+        x, y = parabola_point(
+            self.origin,
+            self.target,
+            self.speed,
+            self.gravity,
+            self.t
+        )
+
+        self.rect.center = (round(x), round(y))
+        self.hitbox.center = self.rect.center
+
+        display = pygame.display.get_surface()
+        screen_height = display.get_height() if display else 720
+
+        if self.rect.right < 0 or self.rect.top > screen_height:
+            self.kill()
+
+    

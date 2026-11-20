@@ -12,7 +12,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
         self.running_sprites = []
         self.jumping_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/jump1.png")).convert_alpha(),(120, 140))
 
-        self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run1.png")), (120, 140)))
+        self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run1.png")).convert_alpha(), (120, 140)))
         self.running_sprites.append(pygame.transform.scale(pygame.image.load(asset_path("assets/run2.png")).convert_alpha(), (120, 140)))
 
         self.ducking_sprite = pygame.transform.scale(pygame.image.load(asset_path("assets/duck.png")).convert_alpha(), (120, 125))
@@ -29,6 +29,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
 
         self.y_velocity = 0
         self.gravity = base_gravity
+        self.gravity_scale = 1
         self.jump_normal = base_jump
         self.jump_strength = self.jump_normal
         self.jump_timer = 0
@@ -38,6 +39,7 @@ class Dinosaur(pygame.sprite.Sprite): #learn classses
 
     def apply_stage_physics(self, stage):
         scale = stage["gravity_scale"]
+        self.gravity_scale = scale
         self.gravity = base_gravity * scale
         self.jump_normal = base_jump * math.sqrt(scale)
 

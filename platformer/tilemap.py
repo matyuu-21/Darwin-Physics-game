@@ -101,7 +101,7 @@ class Tilemap:
                         settings.checkpoint_height
                     )
 
-                    self.checkpoint_rects.append(self.checkpoint_rects)
+                    self.checkpoint_rects.append(checkpoint_rect)
                     self.tiles[row][col] = "."
 
                 elif tile == "G":
@@ -160,7 +160,7 @@ class Tilemap:
         self.gate_original_column = []
 
         for row in range(self.height):
-            original_tile = self.tile[row][self.boss_room_col]
+            original_tile = self.tiles[row][self.boss_room_col]
             self.gate_original_column.append(original_tile)
 
             self.tiles[row][self.boss_room_col] = "#"
@@ -254,7 +254,7 @@ class Tilemap:
 
                 #brown tile
                     if self.gate_closed and col == self.boss_room_col:
-                        tile_color = settings.boss_gate_colo
+                        tile_color = settings.boss_gate_color
                         frame_color = (60, 15, 25)
                     else:
                         tile_color = (145, 95, 55)

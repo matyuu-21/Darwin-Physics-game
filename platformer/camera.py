@@ -15,7 +15,7 @@ class Camera:
 
     def clamp_position(self, x, y):
         max_x = max(0, self.level_width - self.screen_width)
-        max_y = max(0, self.level_height - self.level_height)
+        max_y = max(0, self.level_height - self.screen_height)
 
         x = max(0, min(x, max_x))
         y = max(0, min(y, max_y))

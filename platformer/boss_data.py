@@ -14,6 +14,6 @@ BOSSES = {
         "telegraph_time": 0.8,
         "recover_time": 1.2,
 
-        "recover_damage_multi": 2
+        "recover_damage_mult": 2
     }
 }

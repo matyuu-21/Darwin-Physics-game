@@ -40,6 +40,10 @@ class GameplayScene(Scene):
         if game.player.fell_out:
             game.player.lives -= 1
 
+            game.player.respawn(
+                game.checkpoint_manager.respawn_point()
+            )
+
             game.player.fell_out = False
             game.player.invincible_timer = settings.invincible_time
 
@@ -72,11 +76,11 @@ class GameplayScene(Scene):
             )
 
         for goal_rect in game.tilemap.goal_rects:
-            if game.tilemap.is_goal_loacked(goal_rect):
+            if game.tilemap.is_goal_locked(goal_rect):
                 continue
 
             if game.player.rect.colliderect(goal_rect):
-                game.change_scene("level_comoplete")
+                game.change_scene("level_complete")
                 return
 
         game.camera.update(game.player, dt)

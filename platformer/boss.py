@@ -33,7 +33,7 @@ class Boss:
 
         if self.state == "dormant":
             self.state = "idle"
-            self.state_timer = self.data["idle_timer"]
+            self.state_timer = self.data["idle_time"]
 
     def move_horizontal(self, dt, tilemap):
         old_x = self.rect.x
@@ -246,4 +246,3 @@ class Boss:
                 (screen_rect.centerx - warning.get_width() // 2,
                  screen_rect.top - 55)
             )
-    

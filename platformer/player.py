@@ -8,8 +8,8 @@ class Player:
         self.rect = pygame.Rect(
             round(self.pos.x),
             round(self.pos.y),
-            settings.player_height,
-            settings.player_width
+            settings.player_width,
+            settings.player_height
         )
 
         self.on_ground = False
@@ -22,6 +22,10 @@ class Player:
         self.jump_buffer_timer = 0
 
         self.jump_cut_used = False
+
+        self.lives = settings.max_lives
+        self.invincible_timer = 0
+        self.fell_out = False
 
     def set_planet(self, name):
         name = name.upper()
@@ -44,6 +48,21 @@ class Player:
         self.jump_buffer_timer = 0
         self.jump_cut_used = False
 
+    def take_hit(self, source_x):
+        if self.invincible_timer > 0 or self.lives <= 0:
+            return False
+
+        self.lives -= 1
+        self.invincible_timer = settings.invincible_time
+
+        direction = 1 if self.pos.x >= source_x else -1
+        self.vel.x = direction * settings.hit_knockback_x
+        self.vel.y = settings.hit_knockback_y
+
+        self.on_ground = False
+
+        return True
+    
     def handle_event(self, event):
         jump_keys = (
             pygame.K_SPACE,
@@ -85,6 +104,7 @@ class Player:
         return current
 
     def update(self, dt, keys, tilemap):
+        self.invincible_timer = max(0, self.invincible_timer - dt)
         dt = min(dt, 1 / 30)
 
         if self.on_ground:
@@ -123,7 +143,7 @@ class Player:
 
         else:
             if self.on_ground:
-                friction = settings.air_accel
+                friction = settings.ground_friction
             else:
                 friction = settings.air_accel
 
@@ -184,12 +204,13 @@ class Player:
 
         #respawning
 
-        if self.pos.y > tilemap.height_px + 300:
-            self.respawn(tilemap.spawm_point)
+        if self.pos.y > tilemap.height_px + settings.tile:
+            self.fell_out = True
 
     def draw(self, screen, camera):
-        player_rect = camera.apply(self.rect)
+        if self.invincible_timer > 0:
+            if int(self.invincible_timer * 10) % 2 == 0:
+                return
 
-        pygame.draw.rect(
-            screen, (230, 125, 35), player_rect
-        )
+        screen_rect = camera.apply(self.rect)
+        pygame.draw.rect(screen, (255, 140, 0), screen_rect)

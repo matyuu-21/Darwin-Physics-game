@@ -1,9 +1,23 @@
 from pathlib import Path
+
+import pygame, settings
+
 from tilemap import Tilemap
 from player import Player
 from camera import Camera
+from coin_manager import CoinManager
+from ui import GameUI
 
-import pygame, settings
+from session import Session
+from game_state import GameState
+from scene_manager import SceneManager
+
+from gameplay_scene import GameplayScene
+from menu_scene import MenuScene
+from pause_scene import PauseScene
+from game_over_scene import GameOverScene
+from hud import HUD
+
 
 class Game:
     def __init__(self):
@@ -15,55 +29,109 @@ class Game:
         pygame.display.set_caption("DARWIN'S PLATFORMER")
 
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.Font(None, 28)
-        self.debug_font = pygame.font.Font(None, 22)
 
         self.running = True
         self.show_debug = False
 
         self.base_path = Path(__file__).resolve().parent
+        self.level_path = self.base_path / "levels" / "test_level.txt"
 
+        self.background_color = (110, 190, 235)
+        self.ui = GameUI()
+        self.hud = HUD()
+
+        self.session = Session()
+        self.game_state = GameState()
+        self.scene_manager = SceneManager()
+
+        self.menu_scene = MenuScene(self)
+        self.gameplay_scene = GameplayScene(self)
+        self.pause_scene = PauseScene(self)
+        self.game_over_scene = GameOverScene(self)
+
+        self.scene_manager.add_scene("menu", self.menu_scene)
+        self.scene_manager.add_scene("gameplay", self.gameplay_scene)
+        self.scene_manager.add_scene("pause", self.pause_scene)
+        self.scene_manager.add_scene("game_over", self.game_over_scene)
+
+        self.restart_level()
+
+        self.change_scene("menu")
+        self.game_state.change_state("menu")
+
+    def restart_level(self):
         self.tilemap = Tilemap()
-
-        level_path = self.base_path / "levels" / "test_level.txt"
-        self.tilemap.load(level_path)
+        self.tilemap.load(self.level_path)
 
         self.player = Player(self.tilemap.spawn_point)
+        self.coin_manager = CoinManager(self.tilemap)
 
         self.camera = Camera(
             self.tilemap.width_px,
             self.tilemap.height_px
         )
 
-        self.background_color = (110, 190, 235)
+        self.session.score = 0
+        self.session.coins = 0
+        self.session.double_score_timer = 0
+
+        self.game_state.change_state("playing")
+
+    def change_scene(self, scene_name):
+        self.scene_manager.change_scene(scene_name)
+
+        if scene_name == "gameplay":
+            self.game_state.change_state("playing")
+        elif scene_name == "menu":
+            self.game_state.change_state("menu")
+        elif scene_name == "pause":
+            self.game_state.change_state("paused")
+        elif scene_name == "game_over":
+            self.game_state.change_state("game_over")
 
     def handle_events(self):
-        for event in pygame.event.get():
+        events = pygame.event.get()
 
+        for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
 
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
 
                 if event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    if self.game_state.is_playing():
+                        self.change_scene("pause")
 
-                elif event.key == pygame.K_r: #respawn
-                    self.player.respawn(self.tilemap.spawn_point)
+                    elif self.game_state.is_paused():
+                        self.change_scene("gameplay")
 
-                elif event.key == pygame.K_F3: #debug
+                    else:
+                        self.running = False
+
+                elif event.key == pygame.K_F3:
                     self.show_debug = not self.show_debug
 
-            self.player.handle_event(event)
+                elif event.key == pygame.K_r:
+                    if self.game_state.is_playing():
+                        self.player.respawn(self.tilemap.spawn_point)
+                        self.player.fell_out = False
+
+        # ESC is handled above, so don't send it to the active scene.
+        scene_events = [
+            event for event in events
+            if not (
+                event.type == pygame.KEYDOWN
+                and event.key == pygame.K_ESCAPE
+            )
+        ]
+
+        self.scene_manager.handle_events(scene_events)
 
     def update(self, dt):
         dt = min(dt, 1 / 30)
 
-        keys = pygame.key.get_pressed()
-
-        self.player.update(dt, keys, self.tilemap)
-
-        self.camera.update(self.player, dt)
+        self.session.update(dt)
+        self.scene_manager.update(dt)
 
     def draw_text(self, text, x, y, color=(255, 255, 255)):
         image = self.font.render(text, True, color)
@@ -84,55 +152,42 @@ class Game:
         background.set_alpha(180)
         background.fill((20, 20, 20))
 
-        self.screen.blit(background, (10, 55))
+        self.screen.blit(background, (10, 100))
 
         for index, line in enumerate(debug_lines):
             image = self.debug_font.render(
                 line, True, (255, 255, 255)
             )
             self.screen.blit(
-                image, (20, 65 + index * 24)
+                image, (20, 110 + index * 24)
             )
 
     def draw(self):
         self.screen.fill(self.background_color)
-        self.tilemap.draw(self.screen, self.camera)
-        self.player.draw(self.screen, self.camera)
 
-        gravity_text = (
-            f"{self.player.planet_name} | "
-            f"{self.player.gravity_scale:.1f}x GRAVITY"
-        )
+        self.scene_manager.draw(self.screen)
 
-        self.draw_text(gravity_text, 15, 15)
+        if self.game_state.is_playing():
 
-        controls = (
-            "Move: A/D or Arrows | Jump: Space/W/Up | "
-            "Gravity: 1/2/3 | Respawn: R | Debug: F3 | Quit: Esc"
-        )
+            self.hud.draw_gameplay(self.screen,self)
 
-        control_image = self.debug_font.render(
-            controls, True, (255, 255, 255)
-        )
-
-        self.screen.blit(
-            control_image, (15, settings.screen_height - 30)
-        )
-
-        if self.show_debug:
-            self.draw_debug()
+            if self.show_debug:
+                self.hud.draw_debug(self.screen,self)
 
         pygame.display.flip()
 
     def run(self):
+
         while self.running:
             dt = self.clock.tick(settings.fps) / 1000
 
             self.handle_events()
             self.update(dt)
             self.draw()
-        pygame.quit()
+
+
 
 if __name__ == "__main__":
     game = Game()
     game.run()
+    pygame.quit()

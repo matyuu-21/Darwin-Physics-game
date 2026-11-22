@@ -40,3 +40,13 @@ gravity_jump_mode = "same_speed"
 camera_smooth = 8
 camera_look_ahead = 100
 camera_dead_zone = 80
+
+coin_score = 10
+stomp_score = 100
+shot_kill_score = 50
+
+max_lives = 3
+invincible_time = 1.5
+
+hit_knockback_x = 380
+hit_knockback_y = -520

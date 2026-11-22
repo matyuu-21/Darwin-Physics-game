@@ -14,6 +14,9 @@ class Tilemap:
 
         self.reserved_tiles = "CE^|BGK?" #for future phases
 
+        self.spawns = []
+        self.hazard_rects = []
+
     def load(self, path):
         path = Path(path)
         text = path.read_text(encoding="utf-8")
@@ -31,7 +34,8 @@ class Tilemap:
         self.width_px = self.width * settings.tile
         self.height_px = self.height * settings.tile
 
-        unknwon_chars = set()
+        self.spawns = []
+        self.hazard_rects = []
 
         #player spawn n checking unkown char
         spawn_found = False
@@ -48,18 +52,34 @@ class Tilemap:
                     self.tiles[row][col] = "."
                     spawn_found = True
 
+                elif tile == "C":
+                    self.spawns.append(("C", col, row))
+
+                    self.tiles[row][col] = "."
+
+                elif tile == "^":
+                    spike_rect = pygame.Rect(
+                        col * settings.tile + 8,
+                        row * settings.tile + settings.tile // 2,
+                        settings.tile - 16,
+                        settings.tile // 2
+                    )
+
+                    self.hazard_rects.append(spike_rect)
+                    self.tiles[row][col] = "."
+
                 elif tile not in "#." + self.reserved_tiles:
-                    unknwon_chars.add(tile)
+                    print(f"warning: unknown tile char '{tile}'. it is empty.")
 
         if not spawn_found:
             print("warning no p spawn found, use default")
 
-        for char in sorted(unknwon_chars):
-            print(f"warning: unknown tile char '{char}'. it is empty.")
-
     def is_solid(self, col, row):
-        if col < 0 or col >= self.width or row >= self.height:
+        if col < 0 or col >= self.width:
             return True
+
+        if row >= self.height:
+            return False
 
         if row < 0:
             return False
@@ -132,3 +152,27 @@ class Tilemap:
                         camera.apply(tile_rect),
                         2
                     )
+        self.draw_hazards(screen, camera)
+
+    def draw_hazards(self, screen, camera):
+        for hazard_rect in self.hazard_rects:
+
+            screen_rect = camera.apply(hazard_rect)
+
+            points = [
+                (screen_rect.centerx, screen_rect.top),
+                (screen_rect.right, screen_rect.bottom),
+                (screen_rect.left, screen_rect.bottom)
+            ]
+
+            pygame.draw.polygon(
+                screen,
+                (150, 150, 150),
+                points
+            )
+
+            pygame.draw.polygon(
+                screen,
+                (70, 70, 70),
+                points, 2
+            )

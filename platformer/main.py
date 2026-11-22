@@ -17,6 +17,9 @@ from menu_scene import MenuScene
 from pause_scene import PauseScene
 from game_over_scene import GameOverScene
 from hud import HUD
+from projectile_manager import ProjectileManager
+from checkpoint_manager import CheckpointManager
+from level_complete_scene import LevelCompleteScene
 
 
 class Game:
@@ -48,11 +51,13 @@ class Game:
         self.gameplay_scene = GameplayScene(self)
         self.pause_scene = PauseScene(self)
         self.game_over_scene = GameOverScene(self)
+        self.level_complete_scene = LevelCompleteScene(self)
 
         self.scene_manager.add_scene("menu", self.menu_scene)
         self.scene_manager.add_scene("gameplay", self.gameplay_scene)
         self.scene_manager.add_scene("pause", self.pause_scene)
         self.scene_manager.add_scene("game_over", self.game_over_scene)
+        self.scene_manager.add_scene("level_complete", self.level_complete_scene)
 
         self.restart_level()
 
@@ -65,6 +70,8 @@ class Game:
 
         self.player = Player(self.tilemap.spawn_point)
         self.coin_manager = CoinManager(self.tilemap)
+        self.checkpoint_manager = CheckpointManager(self.tilemap)
+        self.projectile_manager = ProjectileManager()
 
         self.camera = Camera(
             self.tilemap.width_px,
@@ -74,6 +81,7 @@ class Game:
         self.session.score = 0
         self.session.coins = 0
         self.session.double_score_timer = 0
+        self.session.elapsed_time = 0
 
         self.game_state.change_state("playing")
 
@@ -88,6 +96,8 @@ class Game:
             self.game_state.change_state("paused")
         elif scene_name == "game_over":
             self.game_state.change_state("game_over")
+        elif scene_name == "level_complete":
+            self.game_state.change_state("level_complete")
 
     def handle_events(self):
         events = pygame.event.get()

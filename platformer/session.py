@@ -6,6 +6,7 @@ class Session:
         self.coins = 0
 
         self.double_score_timer = 0
+        self.elapsed_time = 0
 
     def add_score(self, points):
 

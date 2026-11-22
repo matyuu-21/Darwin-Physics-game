@@ -56,3 +56,50 @@ class Coin:
         pygame.draw.rect(
             screen, (180, 130, 0), camera.apply(self.rect), 2
         )
+
+
+class Projectile:
+    def __init__(self, player):
+        self.direction = player.facing
+
+        self.width = settings.shot_width
+        self.height = settings.shot_height
+
+        if self.direction > 0:
+            start_x = player.rect.right
+        else:
+            start_x = player.rect.left - self.width
+
+        start_y = player.rect.top + 30
+
+        self.pos = pygame.Vector2(start_x, start_y)
+
+        self.rect = pygame.Rect(
+            round(self.pos.x),
+            round(self.pos.y),
+            self.width,
+            self.height
+        )
+
+        self.age = 0
+        self.damage = 1
+        self.alive = True
+
+    def update(self, dt):
+        self.pos.x += (
+            settings.shot_speed * self.direction * dt
+        )
+
+        self.rect.x = round(self.pos.x)
+        self.age += dt
+
+    def draw(self, screen, camera):
+        screen_rect = camera.apply(self.rect)
+
+        pygame.draw.rect(
+            screen, (255, 220, 40), screen_rect
+        )
+
+        pygame.draw.rect(
+            screen, (160, 110, 0), screen_rect, 2
+        )

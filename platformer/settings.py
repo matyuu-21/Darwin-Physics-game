@@ -1,3 +1,5 @@
+import pygame
+
 screen_width = 1280
 screen_height = 900
 
@@ -50,3 +52,22 @@ invincible_time = 1.5
 
 hit_knockback_x = 380
 hit_knockback_y = -520
+
+shoot_always = False
+shoot_key = pygame.K_f
+shot_speed = 720
+shot_cooldown = 0.25
+shot_lifetime = 1.2
+max_shots = 3
+shot_width = 24
+shot_height = 12
+
+checkpoint_color = (0, 200, 255)
+checkpoint_width = 40
+checkpoint_height = 64
+
+#door stuff
+goal_width = 48
+goal_height = 80
+goal_color = (40, 190, 100)
+goal_frame_color = (25, 90, 55)

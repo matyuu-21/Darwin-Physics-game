@@ -16,8 +16,11 @@ class Tilemap:
 
         self.spawns = []
         self.hazard_rects = []
+        self.checkpoint_rects = []
+        self.goal_rects = []
 
     def load(self, path):
+        self.checkpoint_rects = []
         path = Path(path)
         text = path.read_text(encoding="utf-8")
 
@@ -36,9 +39,12 @@ class Tilemap:
 
         self.spawns = []
         self.hazard_rects = []
+        self.goal_rects = []
 
         #player spawn n checking unkown char
+                # Player spawn and checking unknown characters
         spawn_found = False
+
         for row in range(self.height):
             for col in range(self.width):
                 tile = self.tiles[row][col]
@@ -54,7 +60,6 @@ class Tilemap:
 
                 elif tile == "C":
                     self.spawns.append(("C", col, row))
-
                     self.tiles[row][col] = "."
 
                 elif tile == "^":
@@ -68,8 +73,39 @@ class Tilemap:
                     self.hazard_rects.append(spike_rect)
                     self.tiles[row][col] = "."
 
+                elif tile == "K":
+                    checkpoint_rect = pygame.Rect(
+                        col * settings.tile
+                        + (settings.tile - settings.checkpoint_width) // 2,
+                        row * settings.tile
+                        + settings.tile
+                        - settings.checkpoint_height,
+                        settings.checkpoint_width,
+                        settings.checkpoint_height
+                    )
+
+                    self.checkpoint_rects.append(checkpoint_rect)
+                    self.tiles[row][col] = "."
+
+                elif tile == "G":
+                    goal_rect = pygame.Rect(
+                        col * settings.tile + (settings.tile - settings.goal_width) // 2,
+                        (row + 1) * settings.tile - settings.goal_height,
+                        settings.goal_width,
+                        settings.goal_height
+                    )
+
+                    self.goal_rects.append(goal_rect)
+                    self.tiles[row][col] = "."
+
+
                 elif tile not in "#." + self.reserved_tiles:
-                    print(f"warning: unknown tile char '{tile}'. it is empty.")
+                    print(
+                        f"warning: unknown tile char '{tile}'. it is empty."
+                    )
+
+        if not spawn_found:
+            print("warning no p spawn found, use default")
 
         if not spawn_found:
             print("warning no p spawn found, use default")
@@ -153,6 +189,7 @@ class Tilemap:
                         2
                     )
         self.draw_hazards(screen, camera)
+        self.draw_goals(screen, camera)
 
     def draw_hazards(self, screen, camera):
         for hazard_rect in self.hazard_rects:
@@ -175,4 +212,28 @@ class Tilemap:
                 screen,
                 (70, 70, 70),
                 points, 2
+            )
+
+    def draw_goals(self, screen, camera):
+        for goal_rect in self.goal_rects:
+            screen_rect = camera.apply(goal_rect)
+
+            pygame.draw.rect(
+                screen,
+                settings.goal_color,
+                screen_rect
+            )
+
+            pygame.draw.rect(
+                screen,
+                settings.goal_frame_color,
+                screen_rect,
+                4
+            )
+
+            pygame.draw.circle(
+                screen,
+                (255, 230, 100),
+                (screen_rect.right - 10, screen_rect.centery),
+                4
             )

@@ -11,6 +11,8 @@ class Camera:
         self.screen_width = settings.screen_width
         self.screen_height = settings.screen_height
 
+        self.locked_x = None
+
     def clamp_position(self, x, y):
         max_x = max(0, self.level_width - self.screen_width)
         max_y = max(0, self.level_height - self.level_height)
@@ -25,12 +27,14 @@ class Camera:
 
         #horizontal following
 
-        target_x = (
-            player.rect.centerx
-            - self.screen_width / 2
-            + player.facing * settings.camera_look_ahead
-        )
-
+        if self.locked_x is not None:
+            target_x = self.locked_x
+        else:
+            target_x = (
+                player.rect.centerx
+                - self.screen_width / 2
+                + player.facing * settings.camera_look_ahead
+            )
         #vert deadzone
 
         dead_zone_top = self.screen_height / 2 - settings.camera_dead_zone
@@ -66,4 +70,9 @@ class Camera:
             pos[0] - self.x,
             pos[1] - self.y
         )
-    
+
+    def lock_to(self, x):
+        self.locked_x = x
+
+    def unlock(self):
+        self.locked_x = None

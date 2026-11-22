@@ -29,22 +29,16 @@ class GameplayScene(Scene):
             return
 
         game.session.elapsed_time += dt
-        
+
         game.player.update(
-            dt,
-            pygame.key.get_pressed(),
+            dt, pygame.key.get_pressed(),
             game.tilemap
         )
 
-        # Activate checkpoints before checking for falling.
         game.checkpoint_manager.update(game.player)
 
         if game.player.fell_out:
             game.player.lives -= 1
-
-            game.player.respawn(
-                game.checkpoint_manager.respawn_point()
-            )
 
             game.player.fell_out = False
             game.player.invincible_timer = settings.invincible_time
@@ -65,20 +59,40 @@ class GameplayScene(Scene):
             for _ in range(collected):
                 game.session.add_coin()
 
-        for goal_rect in game.tilemap.goal_rects:
-            if game.player.rect.colliderect(goal_rect):
-                game.change_scene("level_complete")
-                return
-
         game.projectile_manager.update(dt, game.tilemap)
 
-        game.camera.update(game.player, dt)
+        if game.boss_room is not None:
+            game.boss_room.update(
+                dt,
+                game.player,
+                game.tilemap,
+                game.projectile_manager,
+                game.camera,
+                game.session
+            )
 
+        for goal_rect in game.tilemap.goal_rects:
+            if game.tilemap.is_goal_loacked(goal_rect):
+                continue
+
+            if game.player.rect.colliderect(goal_rect):
+                game.change_scene("level_comoplete")
+                return
+
+        game.camera.update(game.player, dt)
+        
     def draw(self, screen):
         game = self.game
 
         game.tilemap.draw(screen, game.camera)
         game.checkpoint_manager.draw(screen, game.camera)
         game.coin_manager.draw(screen, game.camera)
+
+        if game.boss_room is not None:
+            game.boss_room.draw(screen, game.camera)
+
         game.projectile_manager.draw(screen, game.camera)
         game.player.draw(screen, game.camera)
+
+        if game.boss_room is not None:
+            game.boss_room.draw_ui(screen)

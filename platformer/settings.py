@@ -71,3 +71,15 @@ goal_width = 48
 goal_height = 80
 goal_color = (40, 190, 100)
 goal_frame_color = (25, 90, 55)
+
+#boss arena
+boss_room_columns = 20
+boss_trigger_tiles = 2
+boss_intro_time = 1.0
+boss_gate_color = (120, 30, 40)
+boss_score = 500
+boss_hit_flash = 0.12
+boss_defeat_time = 1.5
+
+# Debug boss testing
+debug_keys = True

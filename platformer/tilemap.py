@@ -12,22 +12,32 @@ class Tilemap:
 
         self.spawn_point = (settings.tile, settings.tile)
 
-        self.reserved_tiles = "CE^|BGK?" #for future phases
+        self.reserved_tiles = "CE^|GK?" 
 
         self.spawns = []
         self.hazard_rects = []
         self.checkpoint_rects = []
         self.goal_rects = []
 
+        self.boss_room_col = None
+        self.boss_room_left = None
+        self.boss_spawn = None
+
+        self.gate_original_column = None
+        self.gate_closed = False
+
+        self.boss_room_cleared = False
+
     def load(self, path):
         self.checkpoint_rects = []
+
         path = Path(path)
         text = path.read_text(encoding="utf-8")
 
         rows = [line.rstrip("\r") for line in text.splitlines() if line.strip()]
 
         if not rows:
-            raise ValueError("The level file is empty")
+            raise ValueError("level file empty")
 
         self.width = max(len(row) for row in rows)
         self.height = len(rows)
@@ -40,9 +50,16 @@ class Tilemap:
         self.spawns = []
         self.hazard_rects = []
         self.goal_rects = []
+        self.checkpoint_rects = []
 
-        #player spawn n checking unkown char
-                # Player spawn and checking unknown characters
+        self.boss_room_col = None
+        self.boss_room_left = None
+        self.boss_spawn = None
+
+        self.gate_original_column = None
+        self.gate_closed = False
+        self.boss_room_cleared = False
+
         spawn_found = False
 
         for row in range(self.height):
@@ -68,7 +85,7 @@ class Tilemap:
                         row * settings.tile + settings.tile // 2,
                         settings.tile - 16,
                         settings.tile // 2
-                    )
+                    )   
 
                     self.hazard_rects.append(spike_rect)
                     self.tiles[row][col] = "."
@@ -84,12 +101,13 @@ class Tilemap:
                         settings.checkpoint_height
                     )
 
-                    self.checkpoint_rects.append(checkpoint_rect)
+                    self.checkpoint_rects.append(self.checkpoint_rects)
                     self.tiles[row][col] = "."
 
                 elif tile == "G":
                     goal_rect = pygame.Rect(
-                        col * settings.tile + (settings.tile - settings.goal_width) // 2,
+                        col * settings.tile
+                        + (settings.tile - settings.goal_width) // 2,
                         (row + 1) * settings.tile - settings.goal_height,
                         settings.goal_width,
                         settings.goal_height
@@ -98,17 +116,76 @@ class Tilemap:
                     self.goal_rects.append(goal_rect)
                     self.tiles[row][col] = "."
 
+                elif tile == "B":
+                    if self.boss_room_col is not None:
+                        print("warning: more than one boss marker found")
+                    else:
+                        self.boss_room_col = col
+                        self.boss_room_left = col * settings.tile
 
-                elif tile not in "#." + self.reserved_tiles:
-                    print(
-                        f"warning: unknown tile char '{tile}'. it is empty."
-                    )
+                    self.tiles[row][col] = "."
+
+                elif tile == "X":
+                    if self.boss_spawn is not None:
+                        print("warning: more than one boss marker found")
+                    else:
+                        spawn_x = col * settings.tile + settings.tile / 2
+                        spawn_y = (row + 1) * settings.tile
+
+                        self.boss_spawn = (float(spawn_x), float(spawn_y))
+
+                    self.tiles[row][col] = "."
+
+                elif tile not in "#" + self.reserved_tiles:
+                    print("unknown tile")
 
         if not spawn_found:
-            print("warning no p spawn found, use default")
+            print("no p spawn found, use default")
 
-        if not spawn_found:
-            print("warning no p spawn found, use default")
+        if self.boss_room_col is not None:
+            expected_width = (
+                self.boss_room_col + settings.boss_room_columns
+            )
+
+            if self.width != expected_width:
+                print("boss room must end at level's right edge")
+
+    def close_gate(self):
+        if self.boss_room_col is None:
+            return
+
+        if self.gate_closed:
+            return
+
+        self.gate_original_column = []
+
+        for row in range(self.height):
+            original_tile = self.tile[row][self.boss_room_col]
+            self.gate_original_column.append(original_tile)
+
+            self.tiles[row][self.boss_room_col] = "#"
+
+        self.gate_closed = True
+
+    def open_gate(self):
+        if not self.gate_closed:
+            return
+
+        for row in range(self.height):
+            self.tiles[row][self.boss_room_col] = (
+                self.gate_original_column[row]
+            )
+
+        self.gate_original_column = None
+        self.gate_closed = False
+
+    def is_goal_locked(self, goal_rect):
+        if self.boss_room_left is None:
+            return False
+
+        goal_is_inside_room = goal_rect.centerx >= self.boss_room_left
+        return goal_is_inside_room and not self.boss_room_cleared
+
 
     def is_solid(self, col, row):
         if col < 0 or col >= self.width:
@@ -176,17 +253,19 @@ class Tilemap:
                 )
 
                 #brown tile
+                    if self.gate_closed and col == self.boss_room_col:
+                        tile_color = settings.boss_gate_colo
+                        frame_color = (60, 15, 25)
+                    else:
+                        tile_color = (145, 95, 55)
+                        frame_color = (85, 50, 30)
+
                     pygame.draw.rect(
-                        screen,
-                        (145, 95, 55),
-                        camera.apply(tile_rect)
+                        screen, tile_color, camera.apply(tile_rect)
                     )
 
                     pygame.draw.rect(
-                        screen,
-                        (85, 50, 30),
-                        camera.apply(tile_rect),
-                        2
+                        screen, frame_color, camera.apply(tile_rect), 2
                     )
         self.draw_hazards(screen, camera)
         self.draw_goals(screen, camera)
@@ -218,22 +297,32 @@ class Tilemap:
         for goal_rect in self.goal_rects:
             screen_rect = camera.apply(goal_rect)
 
+            if self.is_goal_locked(goal_rect):
+                # Locked goals are gray
+                door_color = (100, 100, 100)
+                frame_color = (55, 55, 55)
+                light_color = (160, 160, 160)
+            else:
+                door_color = settings.goal_color
+                frame_color = settings.goal_frame_color
+                light_color = (255, 230, 100)
+
             pygame.draw.rect(
                 screen,
-                settings.goal_color,
+                door_color,
                 screen_rect
             )
 
             pygame.draw.rect(
                 screen,
-                settings.goal_frame_color,
+                frame_color,
                 screen_rect,
                 4
             )
 
             pygame.draw.circle(
                 screen,
-                (255, 230, 100),
+                light_color,
                 (screen_rect.right - 10, screen_rect.centery),
                 4
             )

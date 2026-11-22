@@ -20,9 +20,15 @@ from hud import HUD
 from projectile_manager import ProjectileManager
 from checkpoint_manager import CheckpointManager
 from level_complete_scene import LevelCompleteScene
+from boss_room import BossRoom
 
 
 class Game:
+
+    LEVELS = [
+        ("test_level.txt", "boss_1")
+    ]
+
     def __init__(self):
         pygame.init()
 
@@ -37,7 +43,7 @@ class Game:
         self.show_debug = False
 
         self.base_path = Path(__file__).resolve().parent
-        self.level_path = self.base_path / "levels" / "test_level.txt"
+        self.level_index = 0
 
         self.background_color = (110, 190, 235)
         self.ui = GameUI()
@@ -66,6 +72,13 @@ class Game:
 
     def restart_level(self):
         self.tilemap = Tilemap()
+
+        level_file, self.boss_id = self.LEVELS[self.level_index]
+
+        self.level_path = (
+            self.base_path / "levels" / level_file
+        )
+
         self.tilemap.load(self.level_path)
 
         self.player = Player(self.tilemap.spawn_point)
@@ -78,12 +91,95 @@ class Game:
             self.tilemap.height_px
         )
 
+        self.boss_room = None
+
+        if self.tilemap.boss_room_col is not None:
+            self.boss_room = BossRoom(
+                self.boss_id,
+                self.tilemap
+            )
+
         self.session.score = 0
         self.session.coins = 0
         self.session.double_score_timer = 0
         self.session.elapsed_time = 0
 
         self.game_state.change_state("playing")
+
+    
+    def retry_boss(self):
+        # Restore Darwin's lives.
+        self.player.lives = settings.max_lives
+
+        # Respawn at the most recently activated checkpoint.
+        self.player.respawn(
+            self.checkpoint_manager.respawn_point()
+        )
+
+        self.player.fell_out = False
+        self.player.invincible_timer = settings.invincible_time
+
+        # Reset the boss and reopen the entrance.
+        self.boss_room.reset()
+
+        # Return the camera to normal player following.
+        self.camera.unlock()
+
+        # Remove any projectiles from the previous attempt.
+        self.projectile_manager.clear()
+
+        # Return to gameplay.
+        self.change_scene("gameplay")
+
+    
+    def debug_teleport_to_boss(self):
+        if self.boss_room is None:
+            return
+
+        # Reset the boss room before testing again.
+        self.boss_room.reset()
+
+        self.camera.unlock()
+        self.projectile_manager.clear()
+
+        self.player.lives = settings.max_lives
+
+        # Find the floor immediately before the boss room.
+        floor_col = self.tilemap.boss_room_col - 1
+        floor_row = None
+
+        for row in range(self.tilemap.height):
+            if self.tilemap.is_solid(floor_col, row):
+                floor_row = row
+                break
+
+        if floor_row is None:
+            print("Debug error: no floor found before boss room.")
+            return
+
+        # Place Darwin three tiles before the entrance.
+        spawn_x = (
+            self.tilemap.boss_room_left - 3 * settings.tile
+        )
+
+        spawn_y = (
+            floor_row * settings.tile
+            - settings.player_height
+        )
+
+        self.player.respawn((spawn_x, spawn_y))
+        self.player.fell_out = False
+        self.player.invincible_timer = 0
+
+    def debug_next_level(self):
+        # Cycle through the boss test levels.
+        self.level_index = (
+            self.level_index + 1
+        ) % len(self.LEVELS)
+
+        self.restart_level()
+        self.change_scene("gameplay")
+
 
     def change_scene(self, scene_name):
         self.scene_manager.change_scene(scene_name)
@@ -121,10 +217,35 @@ class Game:
                 elif event.key == pygame.K_F3:
                     self.show_debug = not self.show_debug
 
+                elif (
+                    event.key == pygame.K_F5
+                    and settings.debug_keys
+                    and self.game_state.is_playing()
+                ):
+                    self.debug_teleport_to_boss()
+
+                elif (
+                    event.key == pygame.K_F6
+                    and settings.debug_keys
+                    and self.game_state.is_playing()
+                ):
+                    self.debug_next_level()
+
                 elif event.key == pygame.K_r:
                     if self.game_state.is_playing():
-                        self.player.respawn(self.tilemap.spawn_point)
-                        self.player.fell_out = False
+
+                        # Do not allow a normal respawn during a boss fight.
+                        boss_active = (
+                            self.boss_room is not None
+                            and self.boss_room.is_started()
+                        )
+
+                        if not boss_active:
+                            self.player.respawn(
+                                self.tilemap.spawn_point
+                            )
+
+                            self.player.fell_out = False
 
         # ESC is handled above, so don't send it to the active scene.
         scene_events = [
